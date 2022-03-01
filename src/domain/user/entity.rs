@@ -37,7 +37,7 @@ impl<T> From<Error> for std::result::Result<T, Error> {
   }
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct UserEmail(String);
 
 // https://www.rfc-editor.org/errata/eid1690
@@ -107,7 +107,7 @@ fn parse_domain(part: &str) -> Result<(), Error> {
   }
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct UserName(String);
 
 impl TryFrom<String> for UserName {
@@ -141,8 +141,8 @@ impl UserName {
 
 #[derive(Clone)]
 pub struct User {
-  email: UserEmail,
-  name: UserName,
+  pub email: UserEmail,
+  pub name: UserName,
 }
 
 impl User {

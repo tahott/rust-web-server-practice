@@ -15,14 +15,14 @@ pub enum Error {
   BadRequest,
 }
 
-pub fn execute(req: Request) -> Result<Response, Error> {
+pub fn execute(req: Request) -> Result<(), Error> {
   match (
     OAuthProvider::try_from(req.provider),
     AuthorizationCode::try_from(AuthorizationCode::new(req.auth_code)),
   ) {
-    (Ok(provider), Ok(code)) => Ok(Response {
-      provider,
-    }),
+    (Ok(provider), Ok(code)) => {
+      todo!();
+    },
     _ => Err(Error::BadRequest),
   }
 }

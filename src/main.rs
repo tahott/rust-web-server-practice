@@ -1,5 +1,6 @@
 mod infrastructure;
 mod domain;
+mod repositories;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

@@ -1,4 +1,6 @@
-use crate::domain::user::entity::{ UserEmail, UserName };
+use std::sync::Arc;
+
+use crate::{domain::user::entity::{ UserEmail, UserName, User }, repositories::user::{Repository, InsertError}};
 
 pub struct Request {
   pub email: String,
@@ -6,23 +8,32 @@ pub struct Request {
 }
 
 pub struct Response {
-  pub email: String,
-  pub name: String,
+  pub email: UserEmail,
+  pub name: UserName,
 }
 
 pub enum Error {
   BadRequest,
+  Conflict,
+  Unknown,
 }
 
-pub fn execute(req: Request) -> Result<Response, Error> {
+pub fn execute(repo: Arc<dyn Repository>, req: Request) -> Result<Response, Error> {
   match (
     UserEmail::try_from(req.email),
     UserName::try_from(req.name),
   ) {
-    (Ok(email), Ok(name)) => Ok(Response {
-      email: String::from(email),
-      name: String::from(name),
-    }),
+    (Ok(email), Ok(name)) => match repo.insert(email, name) {
+      Ok(User {
+        email,
+        name
+      }) => Ok(Response {
+        email,
+        name,
+      }),
+      Err(InsertError::Conflict) => Err(Error::Conflict),
+      Err(InsertError::Unknown) => Err(Error::Unknown),
+    }
     _ => Err(Error::BadRequest),
   }
 }
@@ -30,19 +41,39 @@ pub fn execute(req: Request) -> Result<Response, Error> {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::domain::user::entity::{UserEmail, UserName};
+  use crate::{domain::user::entity::{UserEmail, UserName}, repositories::user::InMemoryRepository};
 
   #[test]
   fn it_should_be_return_a_bad_request() {
+    let repo = Arc::new(InMemoryRepository::new());
     let req = Request::new(
     UserEmail::gmail(),
     UserName::bad(),
     );
 
-    let res = execute(req);
+    let res = execute(repo, req);
     
     match res {
       Err(Error::BadRequest) => {},
+      _ => unreachable!(),
+    }
+  }
+
+  #[test]
+  fn it_should_be_return_a_user() {
+    let repo = Arc::new(InMemoryRepository::new());
+    let req = Request::new(
+      UserEmail::gmail(),
+      UserName::kent_back(),
+    );
+
+    let res = execute(repo, req);
+
+    match res {
+      Ok(res) => {
+        assert_eq!(res.email, UserEmail::gmail());
+        assert_eq!(res.name, UserName::kent_back());
+      },
       _ => unreachable!(),
     }
   }
