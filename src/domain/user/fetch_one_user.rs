@@ -7,11 +7,13 @@ pub struct Request {
   pub email: String,
 }
 
+#[derive(Debug)]
 pub struct Response {
   pub email: String,
   pub name: String,
 }
 
+#[derive(Debug)]
 pub enum Error {
   BadRequest,
   NotFound,
@@ -37,7 +39,7 @@ pub fn execute(repo: Arc<dyn Repository>, req: Request) -> Result<Response, Erro
 
 #[cfg(test)]
 mod tests {
-  use crate::{repositories::user::InMemoryRepository, domain::user::entity::UserName};
+  use crate::{repositories::user::{InMemoryRepository}, domain::user::entity::UserName};
 
   use super::*;
 

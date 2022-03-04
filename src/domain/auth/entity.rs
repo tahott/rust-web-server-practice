@@ -24,24 +24,6 @@ impl From<OAuthProvider> for String {
   }
 }
 
-// impl TryFrom<String> for AuthorizationCode {
-//   type Error = ();
-
-//   fn try_from(n: String) -> Result<Self, Self::Error> {
-//     if n.is_empty() {
-//       Err(())
-//     } else {
-//       Ok(Self(n))
-//     }
-//   }
-// }
-
-// impl From<AuthorizationCode> for String {
-//   fn from(n: AuthorizationCode) -> Self {
-//     n.0
-//   }
-// }
-
 pub struct Authentication {
   pub provider: OAuthProvider,
   pub auth_code: AuthorizationCode,

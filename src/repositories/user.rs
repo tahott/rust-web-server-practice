@@ -1,6 +1,8 @@
 use std::sync::Mutex;
 
-use crate::domain::user::entity::{UserEmail, UserName, User};
+use diesel::{QueryDsl, RunQueryDsl, insert_into };
+
+use crate::{domain::{user::entity::{UserEmail, UserName, User}}, infrastructure::database::{PgPool, Database}};
 
 pub enum InsertError {
   Conflict,
@@ -60,7 +62,7 @@ impl Repository for InMemoryRepository {
       _ => return Err(InsertError::Unknown),
     };
 
-    if lock.iter().any(|user| user.email == email) {
+    if lock.iter().any(|user| user.email == String::from(email.to_owned())) {
       return Err(InsertError::Conflict);
     }
 
@@ -80,9 +82,71 @@ impl Repository for InMemoryRepository {
       _ => return Err(FetchOneError::Unknown),
     };
 
-    match lock.iter().find(|user| user.email == email) {
+    match lock.iter().find(|user| user.email == String::from(email.to_owned())) {
       Some(user) => Ok(user.clone()),
       None => Err(FetchOneError::NotFound),
     }
+  }
+}
+
+pub struct PgRepository {
+  conn: PgPool,
+}
+
+impl PgRepository {
+  pub fn try_new() -> Self {
+    let pool = Database::establish_connection();
+    
+    Self {
+      conn: pool,
+    }
+  }
+}
+
+impl Repository for PgRepository {
+  fn insert(
+    &self,
+    uemail: UserEmail,
+    uname: UserName,
+  ) -> Result<User, InsertError> {
+    use crate::domain::schema::users;
+
+    let conn = match self.conn.get() {
+      Ok(conn) => conn,
+      _ => return Err(InsertError::Unknown),
+    };
+
+    let user = User {
+      email: String::from(uemail),
+      name: String::from(uname),
+    };
+
+    let res = insert_into(users::table)
+      .values(&user)
+      .returning(users::all_columns)
+      .on_conflict(users::email)
+      .do_nothing()
+      .get_result::<User>(&conn);
+
+    match res {
+      Ok(user) => Ok(user),
+      Err(_) => Err(InsertError::Conflict),
+    }
+  }
+
+  fn fetch_one(&self, email: UserEmail) -> Result<User, FetchOneError> {
+    use crate::domain::schema::users::dsl::*;
+  
+    let conn = match self.conn.get() {
+      Ok(conn) => conn,
+      _ => return Err(FetchOneError::Unknown),
+    };
+    
+    let user = match users.find(email).first(&conn) {
+      Ok(user) => user,
+      Err(_) => return Err(FetchOneError::NotFound),
+    };
+
+    Ok(user)
   }
 }

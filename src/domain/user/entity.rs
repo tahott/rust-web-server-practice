@@ -1,6 +1,5 @@
 use std::fmt::{Display, Formatter};
-
-// use uuid::Uuid;
+use crate::domain::schema::users;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Error {
@@ -139,17 +138,17 @@ impl UserName {
   }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Queryable, Insertable, Debug)]
 pub struct User {
-  pub email: UserEmail,
-  pub name: UserName,
+  pub email: String,
+  pub name: String,
 }
 
 impl User {
   pub fn new(email: UserEmail, name: UserName) -> Self {
     Self {
-      email,
-      name,
+      email: String::from(email),
+      name: String::from(name),
     }
   }
 }

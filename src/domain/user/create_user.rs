@@ -8,8 +8,8 @@ pub struct Request {
 }
 
 pub struct Response {
-  pub email: UserEmail,
-  pub name: UserName,
+  pub email: String,
+  pub name: String,
 }
 
 pub enum Error {
@@ -71,8 +71,8 @@ mod tests {
 
     match res {
       Ok(res) => {
-        assert_eq!(res.email, UserEmail::gmail());
-        assert_eq!(res.name, UserName::kent_back());
+        assert_eq!(res.email, String::from(UserEmail::gmail()));
+        assert_eq!(res.name, String::from(UserName::kent_back()));
       },
       _ => unreachable!(),
     }
