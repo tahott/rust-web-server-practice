@@ -2,8 +2,9 @@ use std::sync::Mutex;
 
 use diesel::{QueryDsl, RunQueryDsl, insert_into };
 
-use crate::{domain::{user::entity::{UserEmail, UserName, User}}, infrastructure::database::{PgPool, Database}};
+use crate::{domain::{user::entity::{UserId, User, UserName, UserLogin}}, infrastructure::database::{PgPool, Database}};
 
+#[derive(Debug)]
 pub enum InsertError {
   Conflict,
   Unknown,
@@ -17,11 +18,12 @@ pub enum FetchOneError {
 pub trait Repository: Send + Sync {
   fn insert(
     &self,
-    email: UserEmail,
+    id: UserId,
+    login: UserLogin,
     name: UserName,
   ) -> Result<User, InsertError>;
 
-  fn fetch_one(&self, email: UserEmail) -> Result<User, FetchOneError>;
+  fn fetch_one(&self, id: UserId) -> Result<User, FetchOneError>;
 }
 
 pub struct InMemoryRepository {
@@ -50,7 +52,8 @@ impl InMemoryRepository {
 impl Repository for InMemoryRepository {
   fn insert(
     &self,
-    email: UserEmail,
+    id: UserId,
+    login: UserLogin,
     name: UserName,
   ) -> Result<User, InsertError> {
     if self.error {
@@ -62,17 +65,22 @@ impl Repository for InMemoryRepository {
       _ => return Err(InsertError::Unknown),
     };
 
-    if lock.iter().any(|user| user.email == String::from(email.to_owned())) {
+    if lock.iter().any(|user| user.id == i32::from(id)) {
       return Err(InsertError::Conflict);
     }
 
-    let user = User::new(email, name);
+    let user = User::new(
+      id,
+      login,
+      name,
+      String::from("avatar_url"),
+    );
     lock.push(user.clone());
 
     Ok(user)
   }
 
-  fn fetch_one(&self, email: UserEmail) -> Result<User, FetchOneError> {
+  fn fetch_one(&self, id: UserId) -> Result<User, FetchOneError> {
     if self.error {
       return Err(FetchOneError::Unknown);
     }
@@ -82,7 +90,7 @@ impl Repository for InMemoryRepository {
       _ => return Err(FetchOneError::Unknown),
     };
 
-    match lock.iter().find(|user| user.email == String::from(email.to_owned())) {
+    match lock.iter().find(|user| user.id == i32::from(id)) {
       Some(user) => Ok(user.clone()),
       None => Err(FetchOneError::NotFound),
     }
@@ -106,8 +114,9 @@ impl PgRepository {
 impl Repository for PgRepository {
   fn insert(
     &self,
-    uemail: UserEmail,
-    uname: UserName,
+    id: UserId,
+    login: UserLogin,
+    name: UserName,
   ) -> Result<User, InsertError> {
     use crate::domain::schema::users;
 
@@ -116,17 +125,14 @@ impl Repository for PgRepository {
       _ => return Err(InsertError::Unknown),
     };
 
-    let user = User {
-      email: String::from(uemail),
-      name: String::from(uname),
-    };
+    let user = User::new(id, login, name, String::from("avatar_url"));
 
     let res = insert_into(users::table)
       .values(&user)
       .returning(users::all_columns)
-      .on_conflict(users::email)
+      .on_conflict(users::id)
       .do_nothing()
-      .get_result::<User>(&conn);
+      .get_result(&conn);
 
     match res {
       Ok(user) => Ok(user),
@@ -134,7 +140,7 @@ impl Repository for PgRepository {
     }
   }
 
-  fn fetch_one(&self, email: UserEmail) -> Result<User, FetchOneError> {
+  fn fetch_one(&self, user_id: UserId) -> Result<User, FetchOneError> {
     use crate::domain::schema::users::dsl::*;
   
     let conn = match self.conn.get() {
@@ -142,7 +148,7 @@ impl Repository for PgRepository {
       _ => return Err(FetchOneError::Unknown),
     };
     
-    let user = match users.find(email).first(&conn) {
+    let user = match users.find(i32::from(user_id)).first(&conn) {
       Ok(user) => user,
       Err(_) => return Err(FetchOneError::NotFound),
     };

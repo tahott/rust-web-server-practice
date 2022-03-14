@@ -1,17 +1,20 @@
 use std::sync::Arc;
 
-use crate::{domain::user::entity::{ UserEmail, UserName, User }, repositories::user::{Repository, InsertError}};
+use crate::{domain::user::entity::{ UserId, UserName, UserLogin }, repositories::user::{Repository, InsertError}};
 
 pub struct Request {
-  pub email: String,
+  pub id: i32,
+  pub login: String,
   pub name: String,
 }
 
+#[derive(Debug)]
 pub struct Response {
-  pub email: String,
   pub name: String,
+  pub email: Option<String>,
 }
 
+#[derive(Debug)]
 pub enum Error {
   BadRequest,
   Conflict,
@@ -20,16 +23,14 @@ pub enum Error {
 
 pub fn execute(repo: Arc<dyn Repository>, req: Request) -> Result<Response, Error> {
   match (
-    UserEmail::try_from(req.email),
+    UserId::try_from(req.id),
+    UserLogin::try_from(req.login),
     UserName::try_from(req.name),
   ) {
-    (Ok(email), Ok(name)) => match repo.insert(email, name) {
-      Ok(User {
-        email,
-        name
-      }) => Ok(Response {
-        email,
-        name,
+    (Ok(id), Ok(login), Ok(name)) => match repo.insert(id, login, name) {
+      Ok(user) => Ok(Response {
+        name: user.name,
+        email: user.email,
       }),
       Err(InsertError::Conflict) => Err(Error::Conflict),
       Err(InsertError::Unknown) => Err(Error::Unknown),
@@ -41,14 +42,15 @@ pub fn execute(repo: Arc<dyn Repository>, req: Request) -> Result<Response, Erro
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::{domain::user::entity::{UserEmail, UserName}, repositories::user::InMemoryRepository};
+  use crate::{domain::user::entity::{UserName}, repositories::user::InMemoryRepository};
 
   #[test]
   fn it_should_be_return_a_bad_request() {
     let repo = Arc::new(InMemoryRepository::new());
     let req = Request::new(
-    UserEmail::gmail(),
-    UserName::bad(),
+      443,
+      UserLogin::kent_back(),
+      UserName::bad(),
     );
 
     let res = execute(repo, req);
@@ -63,7 +65,8 @@ mod tests {
   fn it_should_be_return_a_user() {
     let repo = Arc::new(InMemoryRepository::new());
     let req = Request::new(
-      UserEmail::gmail(),
+      443,
+      UserLogin::kent_back(),
       UserName::kent_back(),
     );
 
@@ -71,7 +74,6 @@ mod tests {
 
     match res {
       Ok(res) => {
-        assert_eq!(res.email, String::from(UserEmail::gmail()));
         assert_eq!(res.name, String::from(UserName::kent_back()));
       },
       _ => unreachable!(),
@@ -79,9 +81,10 @@ mod tests {
   }
 
   impl Request {
-    fn new(email: UserEmail, name: UserName) -> Self {
+    fn new(id: i32, login: UserLogin, name: UserName) -> Self {
       Self {
-        email: String::from(email),
+        id,
+        login: String::from(login),
         name: String::from(name),
       }
     }

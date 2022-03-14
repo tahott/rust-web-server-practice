@@ -1,5 +1,8 @@
-use std::fmt::{Display, Formatter};
-use crate::domain::schema::users;
+use std::{fmt::{Display, Formatter}};
+use chrono::{DateTime, Utc};
+use serde::{Deserialize};
+
+use crate::domain::schema::{users};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Error {
@@ -106,6 +109,72 @@ fn parse_domain(part: &str) -> Result<(), Error> {
   }
 }
 
+const USER_ID_MAX_LENGTH: i32 = 2_147_483_647;
+
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub struct UserId(i32);
+
+impl TryFrom<i32> for UserId {
+  type Error = ();
+
+  fn try_from(n: i32) -> Result<Self, Self::Error> {
+    if n > USER_ID_MAX_LENGTH || n < 0 {
+      Err(())
+    } else {
+      Ok(Self(n))
+    }
+  }
+}
+
+impl From<UserId> for i32 {
+  fn from(n: UserId) -> Self {
+    n.0
+  }
+}
+
+#[cfg(test)]
+impl UserId {
+  pub fn one() -> Self {
+    Self(i32::from(443))
+  }
+
+  pub fn two() -> Self {
+    Self(i32::from(3000))
+  }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct UserLogin(String);
+
+impl TryFrom<String> for UserLogin {
+  type Error = ();
+
+  fn try_from(n: String) -> Result<Self, Self::Error> {
+    if n.is_empty() {
+      Err(())
+    } else {
+      Ok(Self(n))
+    }
+  }
+}
+
+impl From<UserLogin> for String {
+  fn from(n: UserLogin) -> Self {
+    n.0
+  }
+}
+
+#[cfg(test)]
+impl UserLogin {
+  pub fn kent_back() -> Self {
+    Self(String::from("kent-back"))
+  }
+
+  pub fn bad() -> Self {
+    Self(String::from(""))
+  }
+}
+
 #[derive(Clone, PartialEq, Debug)]
 pub struct UserName(String);
 
@@ -140,16 +209,44 @@ impl UserName {
 
 #[derive(Clone, Queryable, Insertable, Debug)]
 pub struct User {
-  pub email: String,
+  pub id: i32,
+  pub login: String,
   pub name: String,
+  pub avatar_url: String,
+  pub email: Option<String>,
+  pub created_at: DateTime<Utc>,
+  pub updated_at: DateTime<Utc>,
 }
 
 impl User {
-  pub fn new(email: UserEmail, name: UserName) -> Self {
+  pub fn new(id: UserId, login: UserLogin, name: UserName, avatar_url: String) -> Self {
+    let now = Utc::now();
     Self {
-      email: String::from(email),
+      id: i32::from(id),
+      login: String::from(login),
       name: String::from(name),
+      avatar_url,
+      email: None,
+      created_at: now,
+      updated_at: now,
     }
   }
 }
 
+#[derive(Deserialize, Insertable, Clone, Debug)]
+#[table_name="users"]
+pub struct NewUser {
+  pub id: i32,
+  pub login: String,
+  pub name: String,
+}
+
+impl NewUser {
+  pub fn new(id: UserId, login: UserLogin, name: UserName) -> Self {
+    Self {
+      id: i32::from(id),
+      login: String::from(login),
+      name: String::from(name),
+    }
+  }
+}
