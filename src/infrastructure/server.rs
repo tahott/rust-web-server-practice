@@ -1,11 +1,15 @@
 use std::env;
 
-use actix_web::{HttpServer, App, middleware::Logger, web, HttpResponse};
+use actix_web::{HttpServer, App, middleware::{Logger, self}, web, HttpResponse, HttpRequest};
 
 use crate::infrastructure::database::PgPool;
 
 pub struct Server {
   port: u16,
+}
+
+async fn index(req: HttpRequest) -> &'static str {
+  "body"
 }
 
 impl Server {
@@ -19,8 +23,8 @@ impl Server {
     let server = HttpServer::new(move || {
       App::new()
         .wrap(Logger::default())
-        .data(pool.clone())
-        .route("/", web::get().to(|| HttpResponse::Ok().body("body")))
+        .app_data(pool.clone())
+        .route("/", web::get().to(index))
     });
 
     server.bind(format!("{}:{}", "127.0.0.1", self.port))?.run().await
