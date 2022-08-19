@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate diesel;
 
+mod api;
 mod infrastructure;
 mod domain;
 mod repositories;
@@ -9,7 +10,6 @@ mod repositories;
 async fn main() -> std::io::Result<()> {
   let pool = infrastructure::database::Database::establish_connection();
   let server = infrastructure::Server::new(8082);
-  println!("Hello, world!");
 
   server.run(pool).await
 }

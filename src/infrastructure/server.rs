@@ -1,14 +1,14 @@
 use std::env;
 
-use actix_web::{HttpServer, App, middleware::{Logger, self}, web, HttpResponse, HttpRequest};
+use actix_web::{HttpServer, App, middleware::{Logger}, web, HttpRequest};
 
-use crate::infrastructure::database::PgPool;
+use crate::{infrastructure::database::PgPool, api::fetch_access_token::fetch_access_token};
 
 pub struct Server {
   port: u16,
 }
 
-async fn index(req: HttpRequest) -> &'static str {
+async fn index(_req: HttpRequest) -> &'static str {
   "body"
 }
 
@@ -25,6 +25,7 @@ impl Server {
         .wrap(Logger::default())
         .app_data(pool.clone())
         .route("/", web::get().to(index))
+        .route("/", web::post().to(fetch_access_token))
     });
 
     server.bind(format!("{}:{}", "127.0.0.1", self.port))?.run().await
