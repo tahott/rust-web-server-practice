@@ -1,5 +1,6 @@
 use std::env;
 
+use actix_cors::Cors;
 use actix_web::{HttpServer, App, middleware::{Logger}, web, HttpRequest};
 
 use crate::{infrastructure::database::PgPool, api::fetch_access_token::fetch_access_token};
@@ -22,10 +23,13 @@ impl Server {
 
     let server = HttpServer::new(move || {
       App::new()
+        .wrap(
+          Cors::default().allow_any_origin()
+        )
         .wrap(Logger::default())
         .app_data(pool.clone())
         .route("/", web::get().to(index))
-        .route("/", web::post().to(fetch_access_token))
+        .route("/signin", web::post().to(fetch_access_token))
     });
 
     server.bind(format!("{}:{}", "127.0.0.1", self.port))?.run().await
