@@ -24,7 +24,7 @@ impl Server {
     let server = HttpServer::new(move || {
       App::new()
         .wrap(
-          Cors::default().allow_any_origin()
+          Cors::default().allow_any_origin().allow_any_method().allow_any_header()
         )
         .wrap(Logger::default())
         .app_data(pool.clone())

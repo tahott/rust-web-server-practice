@@ -1,27 +1,33 @@
 use oauth2::AuthorizationCode;
+use serde::Deserialize;
+
+use crate::domain::auth::entity::Authentication;
 
 use super::entity::OAuthProvider;
 
+#[derive(Debug, Deserialize)]
 pub struct Request {
-  provider: String,
-  auth_code: String,
+  pub provider: String,
+  pub auth_code: String,
 }
 
-pub struct Response {
-  provider: OAuthProvider,
-}
-
+#[derive(Debug)]
 pub enum Error {
   BadRequest,
 }
 
-pub fn execute(req: Request) -> Result<(), Error> {
+pub async fn execute(req: Request) -> Result<String, Error> {
   match (
     OAuthProvider::try_from(req.provider),
     AuthorizationCode::try_from(AuthorizationCode::new(req.auth_code)),
   ) {
-    (Ok(provider), Ok(code)) => {
-      todo!();
+    (Ok(provider), Ok(auth_code)) => {
+      let auth = Authentication::new(provider, auth_code);
+
+      match auth.get_access_token().await {
+        Ok(_) => Ok(auth.create_jwt()),
+        Err(_) => todo!(),
+      }
     },
     _ => Err(Error::BadRequest),
   }
@@ -31,13 +37,13 @@ pub fn execute(req: Request) -> Result<(), Error> {
 mod tests {
   use super::*;
 
-  #[test]
-  fn it_should_be_return_a_bad_request_when_provider_valid() {
+  #[tokio::test]
+  async fn it_should_be_return_a_bad_request_when_provider_valid() {
     let req = Request::new("google".to_string(), "test".to_string());
 
     let res = execute(req);
 
-    match res {
+    match res.await {
       Err(Error::BadRequest) => {},
       _ => unreachable!(),
     }
