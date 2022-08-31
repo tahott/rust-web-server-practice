@@ -1,12 +1,13 @@
-use std::{env, time::SystemTime};
+use std::{env, time::SystemTime, sync::Arc};
 
 use dotenv::dotenv;
 use jsonwebtoken::{encode, Header, EncodingKey};
-use log::info;
 use oauth2::{AuthorizationCode, basic::{BasicClient, BasicErrorResponseType, BasicTokenType}, StandardErrorResponse, StandardTokenResponse, EmptyExtraTokenFields, StandardTokenIntrospectionResponse, StandardRevocableToken, RevocationErrorResponseType, ClientId, ClientSecret, AuthUrl, TokenUrl, reqwest::{async_http_client}, TokenResponse};
 use oauth2::RequestTokenError::{ServerResponse, Request, Parse, Other};
 use serde::{Serialize, Deserialize};
 use reqwest::{header::{HeaderMap, HeaderValue, CONTENT_TYPE, USER_AGENT}, Error};
+
+use crate::{domain::user::{entity::{User, UserId, UserLogin, UserName}, create_user::{self, Request as UserRequest}}, repositories::user::PgRepository};
 
 
 #[derive(Debug, Clone)]
@@ -23,6 +24,7 @@ pub enum TokenError {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UserProfile {
+  pub id: i32,
   pub login: String,
   pub name: Option<String>,
   pub avatar_url: String,
@@ -62,7 +64,7 @@ pub struct Authentication {
 }
 
 impl Authentication {
-  pub fn new(provider: OAuthProvider, auth_code: AuthorizationCode) -> Self {
+  pub fn new(_provider: OAuthProvider, auth_code: AuthorizationCode) -> Self {
     dotenv().ok();
 
     let client = BasicClient::new(
@@ -95,6 +97,19 @@ impl Authentication {
       Ok(resp) => {
         let user = resp.json::<UserProfile>().await.unwrap();
         let exp  = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).expect("error");
+
+        let new_user = User::new(UserId::try_from(user.id).unwrap(), UserLogin::try_from(user.login.clone()).unwrap(), UserName::try_from(user.name.clone().unwrap()).unwrap(), user.avatar_url.clone());
+        let repo = Arc::new(PgRepository::try_new());
+        let req = UserRequest {
+          id: new_user.id,
+          login: new_user.login,
+          name: new_user.name,
+        };
+        
+        match create_user::execute(repo, req) {
+          Ok(res) => {},
+          Err(err) => {},
+        };
 
         let my_claims = Claims {
           exp: exp.as_millis() + (60 * 1000 * 60 * 1), // 1hour
@@ -129,12 +144,12 @@ impl Authentication {
       },
       Err(err) => {
         match err {
-          ServerResponse(e) => {
+          ServerResponse(_) => {
             Err(TokenError::ServerReponse)
           },
-          Request(e) => Err(TokenError::Request),
-          Parse(e, _) => Err(TokenError::Parse),
-          Other(e) => Err(TokenError::Other),
+          Request(_) => Err(TokenError::Request),
+          Parse(_, _) => Err(TokenError::Parse),
+          Other(_) => Err(TokenError::Other),
         }
       },
     }
