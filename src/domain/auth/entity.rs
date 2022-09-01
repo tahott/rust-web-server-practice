@@ -98,21 +98,25 @@ impl Authentication {
         let user = resp.json::<UserProfile>().await.unwrap();
         let exp  = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).expect("error");
 
-        let new_user = User::new(UserId::try_from(user.id).unwrap(), UserLogin::try_from(user.login.clone()).unwrap(), UserName::try_from(user.name.clone().unwrap()).unwrap(), user.avatar_url.clone());
         let repo = Arc::new(PgRepository::try_new());
         let req = UserRequest {
-          id: new_user.id,
-          login: new_user.login,
-          name: new_user.name,
+          id: user.id,
+          login: user.login.clone(),
+          name: user.name.clone().expect(""),
+          avatar_url: user.avatar_url.clone(),
         };
         
         match create_user::execute(repo, req) {
-          Ok(res) => {},
-          Err(err) => {},
+          Ok(res) => {
+            println!("create user:: {:?}", res);
+          },
+          Err(err) => {
+            println!("{:?}", err);
+          },
         };
 
         let my_claims = Claims {
-          exp: exp.as_millis() + (60 * 1000 * 60 * 1), // 1hour
+          exp: exp.as_millis() + (60 * 1000), // 1hour
           aud: Some("".to_string()),
           iss: Some("DECAFO".to_string()),
           user,

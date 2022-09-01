@@ -207,6 +207,27 @@ impl UserName {
   }
 }
 
+#[derive(Clone, PartialEq, Debug)]
+pub struct UserAvatar(String);
+
+impl TryFrom<String> for UserAvatar {
+  type Error = ();
+
+  fn try_from(n: String) -> Result<Self, Self::Error> {
+    if n.is_empty() {
+      Err(())
+    } else {
+      Ok(Self(n))
+    }
+  }
+}
+
+impl From<UserAvatar> for String {
+  fn from(n: UserAvatar) -> Self {
+    n.0
+  }
+}
+
 #[derive(Clone, Queryable, Insertable, Debug)]
 pub struct User {
   pub id: i32,
@@ -219,13 +240,13 @@ pub struct User {
 }
 
 impl User {
-  pub fn new(id: UserId, login: UserLogin, name: UserName, avatar_url: String) -> Self {
+  pub fn new(id: UserId, login: UserLogin, name: UserName, avatar_url: UserAvatar) -> Self {
     let now = Utc::now();
     Self {
       id: i32::from(id),
       login: String::from(login),
       name: String::from(name),
-      avatar_url,
+      avatar_url: String::from(avatar_url),
       email: None,
       created_at: now,
       updated_at: now,

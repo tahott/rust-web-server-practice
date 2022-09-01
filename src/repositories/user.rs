@@ -2,7 +2,7 @@ use std::sync::Mutex;
 
 use diesel::{QueryDsl, RunQueryDsl, insert_into };
 
-use crate::{domain::{user::entity::{UserId, User, UserName, UserLogin}}, infrastructure::database::{PgPool, Database}};
+use crate::{domain::{user::entity::{UserId, User, UserName, UserLogin, UserAvatar}}, infrastructure::database::{PgPool, Database}};
 
 #[derive(Debug)]
 pub enum InsertError {
@@ -21,6 +21,7 @@ pub trait Repository: Send + Sync {
     id: UserId,
     login: UserLogin,
     name: UserName,
+    avatar_url: UserAvatar,
   ) -> Result<User, InsertError>;
 
   fn fetch_one(&self, id: UserId) -> Result<User, FetchOneError>;
@@ -55,6 +56,7 @@ impl Repository for InMemoryRepository {
     id: UserId,
     login: UserLogin,
     name: UserName,
+    avatar_url: UserAvatar,
   ) -> Result<User, InsertError> {
     if self.error {
       return Err(InsertError::Unknown);
@@ -73,7 +75,7 @@ impl Repository for InMemoryRepository {
       id,
       login,
       name,
-      String::from("avatar_url"),
+      avatar_url,
     );
     lock.push(user.clone());
 
@@ -117,6 +119,7 @@ impl Repository for PgRepository {
     id: UserId,
     login: UserLogin,
     name: UserName,
+    avatar_url: UserAvatar,
   ) -> Result<User, InsertError> {
     use crate::domain::schema::users;
 
@@ -125,7 +128,7 @@ impl Repository for PgRepository {
       _ => return Err(InsertError::Unknown),
     };
 
-    let user = User::new(id, login, name, String::from("avatar_url"));
+    let user = User::new(id, login, name, avatar_url);
 
     let res = insert_into(users::table)
       .values(&user)

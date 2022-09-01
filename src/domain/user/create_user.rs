@@ -2,10 +2,13 @@ use std::sync::Arc;
 
 use crate::{domain::user::entity::{ UserId, UserName, UserLogin }, repositories::user::{Repository, InsertError}};
 
+use super::entity::UserAvatar;
+
 pub struct Request {
   pub id: i32,
   pub login: String,
   pub name: String,
+  pub avatar_url: String,
 }
 
 #[derive(Debug)]
@@ -26,8 +29,9 @@ pub fn execute(repo: Arc<dyn Repository>, req: Request) -> Result<Response, Erro
     UserId::try_from(req.id),
     UserLogin::try_from(req.login),
     UserName::try_from(req.name),
+    UserAvatar::try_from(req.avatar_url)
   ) {
-    (Ok(id), Ok(login), Ok(name)) => match repo.insert(id, login, name) {
+    (Ok(id), Ok(login), Ok(name), Ok(avatar_url)) => match repo.insert(id, login, name, avatar_url) {
       Ok(user) => Ok(Response {
         name: user.name,
         email: user.email,
@@ -86,6 +90,7 @@ mod tests {
         id,
         login: String::from(login),
         name: String::from(name),
+        avatar_url: String::from("")
       }
     }
   }
