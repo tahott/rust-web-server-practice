@@ -33,7 +33,7 @@ pub struct InMemoryRepository {
 }
 
 impl InMemoryRepository {
-  pub fn new() -> Self {
+  pub fn _new() -> Self {
     let users = Mutex::new(vec![]);
     Self {
       error: false,

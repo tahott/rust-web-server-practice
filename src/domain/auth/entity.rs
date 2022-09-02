@@ -123,7 +123,7 @@ impl Authentication {
               };
             }
           },
-          Err(e) => {
+          Err(_) => {
             match create_user::execute(repo, req) {
               Ok(res) => {
                 println!("create user:: {:?}", res);

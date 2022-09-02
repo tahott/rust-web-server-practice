@@ -50,7 +50,7 @@ mod tests {
 
   #[test]
   fn it_should_be_return_a_bad_request() {
-    let repo = Arc::new(InMemoryRepository::new());
+    let repo = Arc::new(InMemoryRepository::_new());
     let req = Request::new(
       443,
       UserLogin::kent_back(),
@@ -67,7 +67,7 @@ mod tests {
 
   #[test]
   fn it_should_be_return_a_user() {
-    let repo = Arc::new(InMemoryRepository::new());
+    let repo = Arc::new(InMemoryRepository::_new());
     let req = Request::new(
       443,
       UserLogin::kent_back(),

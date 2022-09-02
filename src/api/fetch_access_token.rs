@@ -21,7 +21,7 @@ pub async fn fetch_access_token(req: web::Json<Request>) -> HttpResponse {
         data: res,
       })
     },
-    Err(e) => {
+    Err(_) => {
       HttpResponse::InternalServerError().json(Res {
         data: "internal server error".to_string()
       })
