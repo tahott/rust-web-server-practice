@@ -7,8 +7,9 @@ pub struct Request {
   pub id: i32,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Response {
+  pub id: i32,
   pub name: String,
   pub email: Option<String>,
 }
@@ -24,6 +25,7 @@ pub fn execute(repo: Arc<dyn Repository>, req: Request) -> Result<Response, Erro
   match UserId::try_from(req.id) {
     Ok(id) => match repo.fetch_one(id) {
       Ok(user) => Ok(Response {
+        id: user.id,
         name: user.name,
         email: user.email,
       }),
@@ -36,7 +38,7 @@ pub fn execute(repo: Arc<dyn Repository>, req: Request) -> Result<Response, Erro
 
 #[cfg(test)]
 mod tests {
-  use crate::{repositories::user::{InMemoryRepository}, domain::user::entity::{UserName, UserLogin, UserId}};
+  use crate::{repositories::user::{InMemoryRepository}, domain::user::entity::{UserName, UserLogin, UserId, UserAvatar}};
 
   use super::*;
 
@@ -56,7 +58,7 @@ mod tests {
   #[test]
   fn it_should_be_return_the_user_otherwise() {
     let repo = Arc::new(InMemoryRepository::new());
-    let r = repo.insert(UserId::one(), UserLogin::kent_back(), UserName::kent_back());
+    let r = repo.insert(UserId::one(), UserLogin::kent_back(), UserName::kent_back(), UserAvatar::user());
 
     let req = Request::new(UserId::one());
 

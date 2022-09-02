@@ -7,7 +7,7 @@ use oauth2::RequestTokenError::{ServerResponse, Request, Parse, Other};
 use serde::{Serialize, Deserialize};
 use reqwest::{header::{HeaderMap, HeaderValue, CONTENT_TYPE, USER_AGENT}, Error};
 
-use crate::{domain::user::{entity::{User, UserId, UserLogin, UserName}, create_user::{self, Request as UserRequest}}, repositories::user::PgRepository};
+use crate::{domain::user::{create_user::{self, Request as UserRequest}, fetch_one_user}, repositories::user::PgRepository};
 
 
 #[derive(Debug, Clone)]
@@ -105,15 +105,35 @@ impl Authentication {
           name: user.name.clone().expect(""),
           avatar_url: user.avatar_url.clone(),
         };
-        
-        match create_user::execute(repo, req) {
-          Ok(res) => {
-            println!("create user:: {:?}", res);
-          },
-          Err(err) => {
-            println!("{:?}", err);
-          },
+        let fetch_request = fetch_one_user::Request {
+          id: user.id,
         };
+
+        match fetch_one_user::execute(repo.clone(), fetch_request) {
+          Ok(res) => {
+            println!("{:?}", res);
+            if res.id != user.id {
+              match create_user::execute(repo, req) {
+                Ok(res) => {
+                  println!("create user:: {:?}", res);
+                },
+                Err(err) => {
+                  println!("{:?}", err);
+                },
+              };
+            }
+          },
+          Err(e) => {
+            match create_user::execute(repo, req) {
+              Ok(res) => {
+                println!("create user:: {:?}", res);
+              },
+              Err(err) => {
+                println!("{:?}", err);
+              },
+            };
+          },
+        }
 
         let my_claims = Claims {
           exp: exp.as_millis() + (60 * 1000), // 1hour

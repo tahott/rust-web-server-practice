@@ -228,6 +228,13 @@ impl From<UserAvatar> for String {
   }
 }
 
+#[cfg(test)]
+impl UserAvatar {
+  pub fn user() -> Self {
+    Self(String::from("avatar_url"))
+  }
+}
+
 #[derive(Clone, Queryable, Insertable, Debug)]
 pub struct User {
   pub id: i32,
