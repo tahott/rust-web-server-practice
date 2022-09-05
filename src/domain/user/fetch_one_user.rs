@@ -21,9 +21,9 @@ pub enum Error {
   Unknown,
 }
 
-pub fn execute(repo: Arc<dyn Repository>, req: Request) -> Result<Response, Error> {
+pub async fn execute(repo: Arc<dyn Repository>, req: Request) -> Result<Response, Error> {
   match UserId::try_from(req.id) {
-    Ok(id) => match repo.fetch_one(id) {
+    Ok(id) => match repo.fetch_one(id).await {
       Ok(user) => Ok(Response {
         id: user.id,
         name: user.name,
@@ -42,12 +42,12 @@ mod tests {
 
   use super::*;
 
-  #[test]
-  fn it_should_be_return_a_not_found_error_when_the_repo_does_not_contain_the_user() {
+  #[tokio::test]
+  async fn it_should_be_return_a_not_found_error_when_the_repo_does_not_contain_the_user() {
     let repo = Arc::new(InMemoryRepository::_new());
     let req = Request::new(UserId::two());
 
-    let res = execute(repo, req);
+    let res = execute(repo, req).await;
 
     match res {
       Err(Error::NotFound) => {},
@@ -55,14 +55,14 @@ mod tests {
     }
   }
 
-  #[test]
-  fn it_should_be_return_the_user_otherwise() {
+  #[tokio::test]
+  async fn it_should_be_return_the_user_otherwise() {
     let repo = Arc::new(InMemoryRepository::_new());
-    let _ = repo.insert(UserId::one(), UserLogin::kent_back(), UserName::kent_back(), UserAvatar::user());
+    let _ = repo.insert(UserId::one(), UserLogin::kent_back(), UserName::kent_back(), UserAvatar::user()).await;
 
     let req = Request::new(UserId::one());
 
-    let res = execute(repo, req);
+    let res = execute(repo, req).await;
 
     match res {
       Ok(res) => {

@@ -98,7 +98,7 @@ impl Authentication {
         let user = resp.json::<UserProfile>().await.unwrap();
         let exp  = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).expect("error");
 
-        let repo = Arc::new(PgRepository::try_new());
+        let repo = Arc::new(PgRepository::try_new().await);
         let req = UserRequest {
           id: user.id,
           login: user.login.clone(),
@@ -109,11 +109,11 @@ impl Authentication {
           id: user.id,
         };
 
-        match fetch_one_user::execute(repo.clone(), fetch_request) {
+        match fetch_one_user::execute(repo.clone(), fetch_request).await {
           Ok(res) => {
             println!("{:?}", res);
             if res.id != user.id {
-              match create_user::execute(repo, req) {
+              match create_user::execute(repo, req).await {
                 Ok(res) => {
                   println!("create user:: {:?}", res);
                 },
@@ -124,7 +124,7 @@ impl Authentication {
             }
           },
           Err(_) => {
-            match create_user::execute(repo, req) {
+            match create_user::execute(repo, req).await {
               Ok(res) => {
                 println!("create user:: {:?}", res);
               },

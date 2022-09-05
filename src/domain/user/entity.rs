@@ -1,8 +1,7 @@
 use std::{fmt::{Display, Formatter}};
-use chrono::{DateTime, Utc};
-use serde::{Deserialize};
-
-use crate::domain::schema::{users};
+use chrono::{DateTime, FixedOffset};
+use sea_orm::{FromQueryResult};
+use serde::Deserialize;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Error {
@@ -235,46 +234,28 @@ impl UserAvatar {
   }
 }
 
-#[derive(Clone, Queryable, Insertable, Debug)]
+#[derive(Clone, Debug, Deserialize, FromQueryResult)]
 pub struct User {
   pub id: i32,
   pub login: String,
   pub name: String,
   pub avatar_url: String,
   pub email: Option<String>,
-  pub created_at: DateTime<Utc>,
-  pub updated_at: DateTime<Utc>,
+  pub created_at: Option<DateTime<FixedOffset>>,
+  pub updated_at: Option<DateTime<FixedOffset>>,
 }
 
 impl User {
   pub fn new(id: UserId, login: UserLogin, name: UserName, avatar_url: UserAvatar) -> Self {
-    let now = Utc::now();
+    // let now = Utc::now();
     Self {
       id: i32::from(id),
       login: String::from(login),
       name: String::from(name),
       avatar_url: String::from(avatar_url),
       email: None,
-      created_at: now,
-      updated_at: now,
-    }
-  }
-}
-
-#[derive(Deserialize, Insertable, Clone, Debug)]
-#[table_name="users"]
-pub struct NewUser {
-  pub id: i32,
-  pub login: String,
-  pub name: String,
-}
-
-impl NewUser {
-  pub fn new(id: UserId, login: UserLogin, name: UserName) -> Self {
-    Self {
-      id: i32::from(id),
-      login: String::from(login),
-      name: String::from(name),
+      created_at: None,
+      updated_at: None,
     }
   }
 }

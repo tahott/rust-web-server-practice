@@ -24,14 +24,14 @@ pub enum Error {
   Unknown,
 }
 
-pub fn execute(repo: Arc<dyn Repository>, req: Request) -> Result<Response, Error> {
+pub async fn execute(repo: Arc<dyn Repository>, req: Request) -> Result<Response, Error> {
   match (
     UserId::try_from(req.id),
     UserLogin::try_from(req.login),
     UserName::try_from(req.name),
     UserAvatar::try_from(req.avatar_url)
   ) {
-    (Ok(id), Ok(login), Ok(name), Ok(avatar_url)) => match repo.insert(id, login, name, avatar_url) {
+    (Ok(id), Ok(login), Ok(name), Ok(avatar_url)) => match repo.insert(id, login, name, avatar_url).await {
       Ok(user) => Ok(Response {
         name: user.name,
         email: user.email,
@@ -48,8 +48,8 @@ mod tests {
   use super::*;
   use crate::{domain::user::entity::{UserName}, repositories::user::InMemoryRepository};
 
-  #[test]
-  fn it_should_be_return_a_bad_request() {
+  #[tokio::test]
+  async fn it_should_be_return_a_bad_request() {
     let repo = Arc::new(InMemoryRepository::_new());
     let req = Request::new(
       443,
@@ -57,7 +57,7 @@ mod tests {
       UserName::bad(),
     );
 
-    let res = execute(repo, req);
+    let res = execute(repo, req).await;
     
     match res {
       Err(Error::BadRequest) => {},
@@ -65,8 +65,8 @@ mod tests {
     }
   }
 
-  #[test]
-  fn it_should_be_return_a_user() {
+  #[tokio::test]
+  async fn it_should_be_return_a_user() {
     let repo = Arc::new(InMemoryRepository::_new());
     let req = Request::new(
       443,
@@ -74,7 +74,7 @@ mod tests {
       UserName::kent_back(),
     );
 
-    let res = execute(repo, req);
+    let res = execute(repo, req).await;
 
     match res {
       Ok(res) => {

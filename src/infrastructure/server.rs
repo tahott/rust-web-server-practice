@@ -2,8 +2,9 @@ use std::env;
 
 use actix_cors::Cors;
 use actix_web::{HttpServer, App, middleware::{Logger}, web, HttpRequest};
+use sea_orm::DatabaseConnection;
 
-use crate::{infrastructure::database::PgPool, api::{fetch_access_token::fetch_access_token, authorization_code::{authorization_code}}};
+use crate::{api::{fetch_access_token::fetch_access_token, authorization_code::{authorization_code}}};
 
 pub struct Server {
   port: u16,
@@ -18,7 +19,7 @@ impl Server {
     Self { port }
   }
 
-  pub async fn run(&self, pool: PgPool) -> std::io::Result<()> {
+  pub async fn run(&self, pool: DatabaseConnection) -> std::io::Result<()> {
     env::set_var("RUST_LOG", "info,axtix_web=debug,actix_server=info");
 
     let server = HttpServer::new(move || {

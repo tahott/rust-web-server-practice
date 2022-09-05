@@ -1,8 +1,12 @@
 use std::sync::Mutex;
 
-use diesel::{QueryDsl, RunQueryDsl, insert_into };
+use async_trait::async_trait;
+use entity::users;
+use entity::users::Entity as Users;
+use sea_orm::DatabaseConnection;
+use sea_orm::{entity::*};
 
-use crate::{domain::{user::entity::{UserId, User, UserName, UserLogin, UserAvatar}}, infrastructure::database::{PgPool, Database}};
+use crate::{domain::{user::entity::{UserId, User, UserName, UserLogin, UserAvatar}}, infrastructure::database::{Database}};
 
 #[derive(Debug)]
 pub enum InsertError {
@@ -15,8 +19,9 @@ pub enum FetchOneError {
   Unknown,
 }
 
+#[async_trait]
 pub trait Repository: Send + Sync {
-  fn insert(
+  async fn insert(
     &self,
     id: UserId,
     login: UserLogin,
@@ -24,7 +29,7 @@ pub trait Repository: Send + Sync {
     avatar_url: UserAvatar,
   ) -> Result<User, InsertError>;
 
-  fn fetch_one(&self, id: UserId) -> Result<User, FetchOneError>;
+  async fn fetch_one(&self, id: UserId) -> Result<User, FetchOneError>;
 }
 
 pub struct InMemoryRepository {
@@ -50,8 +55,9 @@ impl InMemoryRepository {
   }
 }
 
+#[async_trait]
 impl Repository for InMemoryRepository {
-  fn insert(
+  async fn insert(
     &self,
     id: UserId,
     login: UserLogin,
@@ -82,7 +88,7 @@ impl Repository for InMemoryRepository {
     Ok(user)
   }
 
-  fn fetch_one(&self, id: UserId) -> Result<User, FetchOneError> {
+  async fn fetch_one(&self, id: UserId) -> Result<User, FetchOneError> {
     if self.error {
       return Err(FetchOneError::Unknown);
     }
@@ -100,12 +106,12 @@ impl Repository for InMemoryRepository {
 }
 
 pub struct PgRepository {
-  conn: PgPool,
+  conn: DatabaseConnection,
 }
 
 impl PgRepository {
-  pub fn try_new() -> Self {
-    let pool = Database::establish_connection();
+  pub async fn try_new() -> Self {
+    let pool = Database::establish_connection().await;
     
     Self {
       conn: pool,
@@ -113,49 +119,52 @@ impl PgRepository {
   }
 }
 
+#[async_trait]
 impl Repository for PgRepository {
-  fn insert(
+  async fn insert(
     &self,
     id: UserId,
     login: UserLogin,
     name: UserName,
     avatar_url: UserAvatar,
   ) -> Result<User, InsertError> {
-    use crate::domain::schema::users;
-
-    let conn = match self.conn.get() {
-      Ok(conn) => conn,
-      _ => return Err(InsertError::Unknown),
-    };
+    let conn = &self.conn;
 
     let user = User::new(id, login, name, avatar_url);
-
-    let res = insert_into(users::table)
-      .values(&user)
-      .returning(users::all_columns)
-      .on_conflict(users::id)
-      .do_nothing()
-      .get_result(&conn);
-
+    let res = users::ActiveModel {
+      id: Set(user.id),
+      login: Set(user.login.clone()),
+      name: Set(user.name.clone()),
+      avatar_url: Set(user.avatar_url.clone()),
+      ..Default::default()
+    }.save(conn).await;
+    
     match res {
-      Ok(user) => Ok(user),
-      Err(_) => Err(InsertError::Conflict),
+      Ok(_) => Ok(user),
+      Err(e) => {
+        println!("{:?}", e);
+        Err(InsertError::Conflict)
+      },
     }
   }
 
-  fn fetch_one(&self, user_id: UserId) -> Result<User, FetchOneError> {
-    use crate::domain::schema::users::dsl::*;
+  async fn fetch_one(&self, user_id: UserId) -> Result<User, FetchOneError> {
+    let conn = &self.conn;
   
-    let conn = match self.conn.get() {
-      Ok(conn) => conn,
-      _ => return Err(FetchOneError::Unknown),
-    };
-    
-    let user = match users.find(i32::from(user_id)).first(&conn) {
-      Ok(user) => user,
-      Err(_) => return Err(FetchOneError::NotFound),
-    };
-
-    Ok(user)
+    match Users::find_by_id(i32::from(user_id)).one(conn).await {
+      Ok(user) => match user {
+        Some(user) => Ok(User {
+          id: user.id,
+          login: user.login,
+          name: user.name,
+          email: user.email,
+          avatar_url: user.avatar_url,
+          created_at: Some(user.created_at),
+          updated_at: Some(user.updated_at),
+        }),
+        None => Err(FetchOneError::NotFound),
+      },
+      Err(_) => Err(FetchOneError::NotFound),
+    }
   }
 }
