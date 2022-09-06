@@ -7,7 +7,7 @@ use oauth2::RequestTokenError::{ServerResponse, Request, Parse, Other};
 use serde::{Serialize, Deserialize};
 use reqwest::{header::{HeaderMap, HeaderValue, CONTENT_TYPE, USER_AGENT}, Error};
 
-use crate::{domain::user::{create_user::{self, Request as UserRequest}, fetch_one_user}, repositories::user::PgRepository};
+use crate::{domain::user::{create_user::{self, Request as UserRequest}, fetch_one_user, update_user::{self, Request as UpdateUserRequest}}, repositories::user::PgRepository};
 
 
 #[derive(Debug, Clone)]
@@ -112,15 +112,13 @@ impl Authentication {
         match fetch_one_user::execute(repo.clone(), fetch_request).await {
           Ok(res) => {
             println!("{:?}", res);
-            if res.id != user.id {
-              match create_user::execute(repo, req).await {
-                Ok(res) => {
-                  println!("create user:: {:?}", res);
-                },
-                Err(err) => {
-                  println!("{:?}", err);
-                },
+            if res.id == user.id {
+              let req = UpdateUserRequest {
+                id: req.id,
+                name: req.name,
+                avatar_url: req.avatar_url,
               };
+              update_user::execute(repo, req).await;
             }
           },
           Err(_) => {

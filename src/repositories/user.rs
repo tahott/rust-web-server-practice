@@ -14,6 +14,10 @@ pub enum InsertError {
   Unknown,
 }
 
+pub enum UpdateError {
+  Unknown,
+}
+
 pub enum FetchOneError {
   NotFound,
   Unknown,
@@ -28,6 +32,13 @@ pub trait Repository: Send + Sync {
     name: UserName,
     avatar_url: UserAvatar,
   ) -> Result<User, InsertError>;
+
+  async fn update(
+    &self,
+    id: UserId,
+    name: UserName,
+    avatar_url: UserAvatar,
+  ) -> Result<User, UpdateError>;
 
   async fn fetch_one(&self, id: UserId) -> Result<User, FetchOneError>;
 }
@@ -103,6 +114,25 @@ impl Repository for InMemoryRepository {
       None => Err(FetchOneError::NotFound),
     }
   }
+
+  async fn update(&self, id: UserId, name: UserName, avatar_url: UserAvatar) -> Result<User, UpdateError> {
+    let mut lock = match self.users.lock() {
+      Ok(lock) => lock,
+      _ => todo!()
+    };
+
+    match lock.iter_mut().map(|user| {
+      if user.id == i32::from(id) {
+        user.name = String::from(name.clone());
+        user.avatar_url = String::from(avatar_url.clone());
+      };
+
+      user
+    }).find(|user| user.id == i32::from(id)) {
+      Some(user) => Ok(user.clone()),
+      None => Err(UpdateError::Unknown)
+    }
+  }
 }
 
 pub struct PgRepository {
@@ -131,13 +161,18 @@ impl Repository for PgRepository {
     let conn = &self.conn;
 
     let user = User::new(id, login, name, avatar_url);
-    let res = users::ActiveModel {
+
+    let user_model = users::ActiveModel {
       id: Set(user.id),
       login: Set(user.login.clone()),
       name: Set(user.name.clone()),
       avatar_url: Set(user.avatar_url.clone()),
-      ..Default::default()
-    }.save(conn).await;
+      email: Set(None),
+      created_at: Set(user.created_at),
+      updated_at: Set(user.updated_at),
+    };
+
+    let res = user_model.insert(conn).await;
     
     match res {
       Ok(_) => Ok(user),
@@ -159,12 +194,41 @@ impl Repository for PgRepository {
           name: user.name,
           email: user.email,
           avatar_url: user.avatar_url,
-          created_at: Some(user.created_at),
-          updated_at: Some(user.updated_at),
+          created_at: user.created_at,
+          updated_at: user.updated_at,
         }),
         None => Err(FetchOneError::NotFound),
       },
       Err(_) => Err(FetchOneError::NotFound),
+    }
+  }
+
+  async fn update(&self, id: UserId, name: UserName, avatar_url: UserAvatar) -> Result<User, UpdateError> {
+    let conn = &self.conn;
+
+    let user = users::ActiveModel {
+      id: Set(i32::from(id)),
+      name: Set(String::from(name)),
+      avatar_url: Set(String::from(avatar_url)),
+      ..Default::default()
+    };
+
+    let res = user.save(conn).await;
+
+    match res {
+      Ok(user) => Ok(User {
+        id: user.id.unwrap(),
+        login: user.login.unwrap(),
+        name: user.name.unwrap(),
+        avatar_url: user.avatar_url.unwrap(),
+        email: user.email.unwrap(),
+        created_at: user.created_at.unwrap(),
+        updated_at: user.updated_at.unwrap(),
+      }),
+      Err(e) => {
+        println!("{:?}", e);
+        Err(UpdateError::Unknown)
+      },
     }
   }
 }

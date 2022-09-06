@@ -1,6 +1,6 @@
 use std::{fmt::{Display, Formatter}};
-use chrono::{DateTime, FixedOffset};
-use sea_orm::{FromQueryResult};
+use chrono::{DateTime, FixedOffset, Utc};
+use sea_orm::{FromQueryResult, prelude::DateTimeLocal};
 use serde::Deserialize;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -241,21 +241,21 @@ pub struct User {
   pub name: String,
   pub avatar_url: String,
   pub email: Option<String>,
-  pub created_at: Option<DateTime<FixedOffset>>,
-  pub updated_at: Option<DateTime<FixedOffset>>,
+  pub created_at: DateTime<FixedOffset>,
+  pub updated_at: DateTime<FixedOffset>,
 }
 
 impl User {
   pub fn new(id: UserId, login: UserLogin, name: UserName, avatar_url: UserAvatar) -> Self {
-    // let now = Utc::now();
+    let now = Utc::now().with_timezone(&FixedOffset::east(9 * 3600));
     Self {
       id: i32::from(id),
       login: String::from(login),
       name: String::from(name),
       avatar_url: String::from(avatar_url),
       email: None,
-      created_at: None,
-      updated_at: None,
+      created_at: now,
+      updated_at: now,
     }
   }
 }
