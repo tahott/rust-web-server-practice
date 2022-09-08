@@ -6,13 +6,13 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [workspace]
-members = [".", "entity", "migration"]
+members = [".", "entity"]
 
 [dependencies]
 actix-web = "4.1.0"
 actix-cors = "0.6"
 oauth2 = "4.2"
-chrono = "0.4.19"
+chrono = "^0"
 uuid = { version = "1.1.2", features = ["serde", "v4"] }
 dotenv = "0.15.0"
 serde = {version="1.0", features=["derive"]}
@@ -23,7 +23,6 @@ tokio = { version = "1", features = ["full"] }
 async-trait = "0.1.57"
 
 entity = { path = "entity" }
-migration = { path = "migration" }
 
 [dependencies.sea-orm]
 version = "^0"

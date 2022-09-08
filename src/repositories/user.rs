@@ -1,12 +1,12 @@
 use std::sync::Mutex;
 
 use async_trait::async_trait;
-use entity::users;
-use entity::users::Entity as Users;
+use entity::user;
+use entity::user::Entity as User;
 use sea_orm::DatabaseConnection;
 use sea_orm::{entity::*};
 
-use crate::{domain::{user::entity::{UserId, User, UserName, UserLogin, UserAvatar}}, infrastructure::database::{Database}};
+use crate::{domain::{user::entity::{UserId, User as UserEntity, UserName, UserLogin, UserAvatar}}, infrastructure::database::{Database}};
 
 #[derive(Debug)]
 pub enum InsertError {
@@ -31,21 +31,21 @@ pub trait Repository: Send + Sync {
     login: UserLogin,
     name: UserName,
     avatar_url: UserAvatar,
-  ) -> Result<User, InsertError>;
+  ) -> Result<UserEntity, InsertError>;
 
   async fn update(
     &self,
     id: UserId,
     name: UserName,
     avatar_url: UserAvatar,
-  ) -> Result<User, UpdateError>;
+  ) -> Result<UserEntity, UpdateError>;
 
-  async fn fetch_one(&self, id: UserId) -> Result<User, FetchOneError>;
+  async fn fetch_one(&self, id: UserId) -> Result<UserEntity, FetchOneError>;
 }
 
 pub struct InMemoryRepository {
   error: bool,
-  users: Mutex<Vec<User>>,
+  users: Mutex<Vec<UserEntity>>,
 }
 
 impl InMemoryRepository {
@@ -74,7 +74,7 @@ impl Repository for InMemoryRepository {
     login: UserLogin,
     name: UserName,
     avatar_url: UserAvatar,
-  ) -> Result<User, InsertError> {
+  ) -> Result<UserEntity, InsertError> {
     if self.error {
       return Err(InsertError::Unknown);
     }
@@ -88,7 +88,7 @@ impl Repository for InMemoryRepository {
       return Err(InsertError::Conflict);
     }
 
-    let user = User::new(
+    let user = UserEntity::new(
       id,
       login,
       name,
@@ -99,7 +99,7 @@ impl Repository for InMemoryRepository {
     Ok(user)
   }
 
-  async fn fetch_one(&self, id: UserId) -> Result<User, FetchOneError> {
+  async fn fetch_one(&self, id: UserId) -> Result<UserEntity, FetchOneError> {
     if self.error {
       return Err(FetchOneError::Unknown);
     }
@@ -115,7 +115,7 @@ impl Repository for InMemoryRepository {
     }
   }
 
-  async fn update(&self, id: UserId, name: UserName, avatar_url: UserAvatar) -> Result<User, UpdateError> {
+  async fn update(&self, id: UserId, name: UserName, avatar_url: UserAvatar) -> Result<UserEntity, UpdateError> {
     let mut lock = match self.users.lock() {
       Ok(lock) => lock,
       _ => todo!()
@@ -157,12 +157,12 @@ impl Repository for PgRepository {
     login: UserLogin,
     name: UserName,
     avatar_url: UserAvatar,
-  ) -> Result<User, InsertError> {
+  ) -> Result<UserEntity, InsertError> {
     let conn = &self.conn;
 
-    let user = User::new(id, login, name, avatar_url);
+    let user = UserEntity::new(id, login, name, avatar_url);
 
-    let user_model = users::ActiveModel {
+    let user_model = user::ActiveModel {
       id: Set(user.id),
       login: Set(user.login.clone()),
       name: Set(user.name.clone()),
@@ -183,12 +183,12 @@ impl Repository for PgRepository {
     }
   }
 
-  async fn fetch_one(&self, user_id: UserId) -> Result<User, FetchOneError> {
+  async fn fetch_one(&self, user_id: UserId) -> Result<UserEntity, FetchOneError> {
     let conn = &self.conn;
   
-    match Users::find_by_id(i32::from(user_id)).one(conn).await {
+    match User::find_by_id(i32::from(user_id)).one(conn).await {
       Ok(user) => match user {
-        Some(user) => Ok(User {
+        Some(user) => Ok(UserEntity {
           id: user.id,
           login: user.login,
           name: user.name,
@@ -203,10 +203,10 @@ impl Repository for PgRepository {
     }
   }
 
-  async fn update(&self, id: UserId, name: UserName, avatar_url: UserAvatar) -> Result<User, UpdateError> {
+  async fn update(&self, id: UserId, name: UserName, avatar_url: UserAvatar) -> Result<UserEntity, UpdateError> {
     let conn = &self.conn;
 
-    let user = users::ActiveModel {
+    let user = user::ActiveModel {
       id: Set(i32::from(id)),
       name: Set(String::from(name)),
       avatar_url: Set(String::from(avatar_url)),
@@ -216,7 +216,7 @@ impl Repository for PgRepository {
     let res = user.save(conn).await;
 
     match res {
-      Ok(user) => Ok(User {
+      Ok(user) => Ok(UserEntity {
         id: user.id.unwrap(),
         login: user.login.unwrap(),
         name: user.name.unwrap(),

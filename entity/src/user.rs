@@ -3,9 +3,9 @@
 use sea_orm::entity::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
-#[sea_orm(table_name = "users")]
+#[sea_orm(table_name = "user")]
 pub struct Model {
-    #[sea_orm(primary_key, auto_increment = false)]
+    #[sea_orm(primary_key)]
     pub id: i32,
     pub login: String,
     pub name: String,
@@ -24,4 +24,5 @@ impl RelationTrait for Relation {
     }
 }
 
-impl ActiveModelBehavior for ActiveModel {}
+impl ActiveModelBehavior for ActiveModel {
+}
