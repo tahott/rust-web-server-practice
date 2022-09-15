@@ -111,7 +111,6 @@ impl Authentication {
 
         match fetch_one_user::execute(repo.clone(), fetch_request).await {
           Ok(res) => {
-            println!("{:?}", res);
             if res.id == user.id {
               let req = UpdateUserRequest {
                 id: req.id,

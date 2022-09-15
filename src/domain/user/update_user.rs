@@ -16,9 +16,7 @@ pub async fn execute(repo: Arc<dyn Repository>, req: Request) {
     UserAvatar::try_from(req.avatar_url)
   ) {
     (Ok(id), Ok(name), Ok(avatar_url)) => match repo.update(id, name, avatar_url).await {
-      Ok(user) => {
-        println!("{:?}", user);
-      },
+      Ok(_) => {},
       Err(_) => todo!(),
     },
     _ =>  todo!()

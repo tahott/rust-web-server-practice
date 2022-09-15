@@ -1,6 +1,6 @@
 use std::{fmt::{Display, Formatter}};
-use chrono::{DateTime, FixedOffset, Utc};
-use sea_orm::{FromQueryResult, prelude::DateTimeLocal};
+use chrono::{FixedOffset, Utc};
+use sea_orm::{FromQueryResult, prelude::DateTimeWithTimeZone};
 use serde::Deserialize;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -235,17 +235,17 @@ impl UserAvatar {
 }
 
 #[derive(Clone, Debug, Deserialize, FromQueryResult)]
-pub struct User {
+pub struct UserEntity {
   pub id: i32,
   pub login: String,
   pub name: String,
   pub avatar_url: String,
   pub email: Option<String>,
-  pub created_at: DateTime<FixedOffset>,
-  pub updated_at: DateTime<FixedOffset>,
+  pub created_at: DateTimeWithTimeZone,
+  pub updated_at: DateTimeWithTimeZone,
 }
 
-impl User {
+impl UserEntity {
   pub fn new(id: UserId, login: UserLogin, name: UserName, avatar_url: UserAvatar) -> Self {
     let now = Utc::now().with_timezone(&FixedOffset::east(9 * 3600));
     Self {

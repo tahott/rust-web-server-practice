@@ -6,7 +6,7 @@ use entity::user::Entity as User;
 use sea_orm::DatabaseConnection;
 use sea_orm::{entity::*};
 
-use crate::{domain::{user::entity::{UserId, User as UserEntity, UserName, UserLogin, UserAvatar}}, infrastructure::database::{Database}};
+use crate::{domain::{user::entity::{UserId, UserEntity, UserName, UserLogin, UserAvatar}}, infrastructure::database::{Database}};
 
 #[derive(Debug)]
 pub enum InsertError {

@@ -1,7 +1,6 @@
 use std::env;
 use dotenv::dotenv;
-use migration::{DbErr};
-use sea_orm::DatabaseConnection;
+use sea_orm::{DatabaseConnection, DbErr};
 
 async fn init_pool(database_url: &str) -> Result<DatabaseConnection, DbErr> {
   sea_orm::Database::connect(database_url).await
