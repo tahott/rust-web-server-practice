@@ -1,23 +1,16 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Utc, FixedOffset};
+use sea_orm::prelude::DateTimeWithTimeZone;
 
-pub enum Job {
-  BackEnd,
-  FrontEnd,
-  Infra,
-  DevOps,
-  Data,
-}
-
-pub struct Career {
+pub struct CareerEntity {
   pub user_id: i32,
   pub company_name: String,
-  pub job: Job,
-  pub in_at: DateTime<Utc>,
-  pub out_at: Option<DateTime<Utc>>,
+  pub job: String,
+  pub in_at: DateTimeWithTimeZone,
+  pub out_at: Option<DateTimeWithTimeZone>,
 }
 
-impl Career {
-  pub fn new(user_id: i32, company_name: String, job: Job, in_at: DateTime<Utc>, out_at: Option<DateTime<Utc>>) -> Self {
+impl CareerEntity {
+  pub fn new(user_id: i32, company_name: String, job: String, in_at: DateTime<FixedOffset>, out_at: Option<DateTime<FixedOffset>>) -> Self {
     Self {
       user_id,
       company_name,

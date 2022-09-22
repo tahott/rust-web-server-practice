@@ -133,7 +133,7 @@ impl Authentication {
         }
 
         let my_claims = Claims {
-          exp: exp.as_millis() + (60 * 1000), // 1hour
+          exp: exp.as_millis() + (60 * 1000) * 60, // 1hour
           aud: Some("".to_string()),
           iss: Some("DECAFO".to_string()),
           user,
