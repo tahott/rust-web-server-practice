@@ -1,6 +1,7 @@
 use chrono::{DateTime, Utc, FixedOffset};
 use sea_orm::prelude::DateTimeWithTimeZone;
 
+#[derive(Clone)]
 pub struct CareerEntity {
   pub user_id: i32,
   pub company_name: String,

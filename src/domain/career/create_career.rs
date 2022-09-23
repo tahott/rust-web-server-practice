@@ -12,14 +12,24 @@ pub struct Request {
   pub out_at: Option<DateTime<FixedOffset>>,
 }
 
+pub struct Response {
+  pub user_id: i32,
+  pub company_name: String,
+  pub job: String,
+}
+
 pub enum Error {
   BadRequest,
   Unknown,
 }
 
-pub async fn execute(repo: Arc<dyn Repository>, req: Request) -> Result<(), Error>  {
+pub async fn execute(repo: Arc<dyn Repository>, req: Request) -> Result<Response, Error>  {
   match repo.insert(req.user_id, req.company_name, req.job, req.in_at, req.out_at).await {
-    Ok(_) => Ok(()),
+    Ok(res) => Ok(Response {
+      user_id: res.user_id,
+      company_name: res.company_name,
+      job: res.job
+    }),
     Err(_) => Err(Error::Unknown),
   }
 }
@@ -39,7 +49,7 @@ mod tests {
 
     match res {
       Ok(res) => {
-        assert_eq!(res, ());
+        assert_eq!(res.company_name, "PineApple".to_string());
       },
       _ => unreachable!(),
     }
