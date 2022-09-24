@@ -35,4 +35,3 @@ impl ActiveModelBehavior for ActiveModel {
     Ok(self)
   }
 }
-

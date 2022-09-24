@@ -11,6 +11,7 @@ pub struct Model {
     pub company_name: String,
     pub in_at: DateTimeWithTimeZone,
     pub out_at: Option<DateTimeWithTimeZone>,
+    pub job: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
