@@ -1,17 +1,17 @@
-use chrono::{DateTime, Utc, FixedOffset};
-use sea_orm::prelude::DateTimeWithTimeZone;
+use chrono::{NaiveDate};
+use serde::Serialize;
 
-#[derive(Clone)]
+#[derive(Clone, Serialize)]
 pub struct CareerEntity {
   pub user_id: i32,
   pub company_name: String,
   pub job: String,
-  pub in_at: DateTimeWithTimeZone,
-  pub out_at: Option<DateTimeWithTimeZone>,
+  pub in_at: NaiveDate,
+  pub out_at: Option<NaiveDate>,
 }
 
 impl CareerEntity {
-  pub fn new(user_id: i32, company_name: String, job: String, in_at: DateTime<FixedOffset>, out_at: Option<DateTime<FixedOffset>>) -> Self {
+  pub fn new(user_id: i32, company_name: String, job: String, in_at: NaiveDate, out_at: Option<NaiveDate>) -> Self {
     Self {
       user_id,
       company_name,

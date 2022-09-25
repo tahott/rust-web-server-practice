@@ -28,7 +28,7 @@ pub async fn execute(repo: Arc<dyn Repository>, req: Request) -> Result<Response
 
 #[cfg(test)]
 mod tests {
-  use chrono::{Utc, TimeZone, FixedOffset};
+  use chrono::{NaiveDate};
 
 use crate::repositories::career::InMemoryRepository;
 
@@ -42,23 +42,23 @@ use super::*;
       1,
       "Micro Hard".to_string(),
       "Designer".to_string(),
-      Utc.ymd(2016, 5, 1).and_hms(0, 0, 0).with_timezone(&FixedOffset::east(9 * 3600)),
-      Some(Utc.ymd(2018, 3, 31).and_hms(0, 0, 0).with_timezone(&FixedOffset::east(9 * 3600))),
+      NaiveDate::from_ymd(2016, 5, 1),
+      Some(NaiveDate::from_ymd(2018, 3, 31)),
     ).await;
 
     let _ =  repo.insert(
       2,
       "Micro Hard".to_string(),
       "Designer".to_string(),
-      Utc.ymd(2016, 7, 1).and_hms(0, 0, 0).with_timezone(&FixedOffset::east(9 * 3600)),
-      Some(Utc.ymd(2018, 1, 31).and_hms(0, 0, 0).with_timezone(&FixedOffset::east(9 * 3600))),
+      NaiveDate::from_ymd(2016, 7, 1),
+      Some(NaiveDate::from_ymd(2018, 1, 31)),
     ).await;
 
     let _ = repo.insert(
       1,
       "Wercel".to_string(),
       "Server Engieneer".to_string(),
-      Utc.ymd(2018, 4, 1).and_hms(0, 0, 0).with_timezone(&FixedOffset::east(9 * 3600)),
+      NaiveDate::from_ymd(2018, 4, 1),
       None,
     ).await;
 

@@ -9,8 +9,8 @@ pub struct Model {
     pub id: i32,
     pub user_id: i32,
     pub company_name: String,
-    pub in_at: DateTimeWithTimeZone,
-    pub out_at: Option<DateTimeWithTimeZone>,
+    pub in_at: Date,
+    pub out_at: Option<Date>,
     pub job: String,
 }
 

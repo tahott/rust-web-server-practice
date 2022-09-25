@@ -1,15 +1,17 @@
 use std::sync::Arc;
 
-use chrono::{DateTime, FixedOffset};
+use chrono::{NaiveDate};
+use serde::Deserialize;
 
 use crate::repositories::career::Repository;
 
+#[derive(Debug, Deserialize)]
 pub struct Request {
   pub user_id: i32,
   pub company_name: String,
   pub job: String,
-  pub in_at: DateTime<FixedOffset>,
-  pub out_at: Option<DateTime<FixedOffset>>,
+  pub in_at: NaiveDate,
+  pub out_at: Option<NaiveDate>,
 }
 
 pub struct Response {
@@ -36,14 +38,13 @@ pub async fn execute(repo: Arc<dyn Repository>, req: Request) -> Result<Response
 
 #[cfg(test)]
 mod tests {
-  use chrono::Utc;
   use crate::repositories::career::InMemoryRepository;
   use super::*;
 
   #[tokio::test]
   async fn it_should_be_return_ok() {
     let repo = Arc::new(InMemoryRepository::new());
-    let req = Request::new(1, "PineApple".to_string(), "Server Engineer".to_string(), Utc::now().with_timezone(&FixedOffset::east(9 * 3600)), None);
+    let req = Request::new(1, "PineApple".to_string(), "Server Engineer".to_string(), NaiveDate::from_ymd(2022, 1, 1), None);
 
     let res = execute(repo, req).await;
 
@@ -56,7 +57,7 @@ mod tests {
   }
 
   impl Request {
-    fn new(user_id: i32, company_name: String, job: String, in_at: DateTime<FixedOffset>, out_at: Option<DateTime<FixedOffset>>) -> Self {
+    fn new(user_id: i32, company_name: String, job: String, in_at: NaiveDate, out_at: Option<NaiveDate>) -> Self {
       Self {
         user_id,
         company_name,
