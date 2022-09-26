@@ -1,7 +1,6 @@
 use chrono::{NaiveDate};
-use serde::Serialize;
 
-#[derive(Clone, Serialize)]
+#[derive(Clone)]
 pub struct CareerEntity {
   pub user_id: i32,
   pub company_name: String,

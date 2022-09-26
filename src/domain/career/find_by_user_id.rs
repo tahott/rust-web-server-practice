@@ -1,15 +1,36 @@
 use std::sync::Arc;
 
-use crate::repositories::career::Repository;
+use chrono::NaiveDate;
+use serde::Serialize;
 
-use super::entity::CareerEntity;
+use crate::repositories::career::Repository;
 
 pub struct Request {
   pub user_id: i32,
 }
 
+#[derive(Serialize)]
+#[serde(rename_all="camelCase")]
+pub struct FetchCareerDto {
+  company: String,
+  job: String,
+  in_at: NaiveDate,
+  out_at: Option<NaiveDate>
+}
+
+impl FetchCareerDto {
+  fn new(company: String, job: String, in_at: NaiveDate, out_at: Option<NaiveDate>) -> Self {
+    Self {
+      company,
+      job,
+      in_at,
+      out_at
+    }
+  }
+}
+
 pub struct Response {
-  pub careers: Vec<CareerEntity>
+  pub careers: Vec<FetchCareerDto>
 }
 
 pub enum Error {
@@ -20,7 +41,7 @@ pub enum Error {
 pub async fn execute(repo: Arc<dyn Repository>, req: Request) -> Result<Response, Error> {
   match repo.find_by_user_id(req.user_id).await {
     Ok(res) => Ok(Response {
-      careers: res,
+      careers: res.iter().map(|career| FetchCareerDto::new(career.company_name.clone(), career.job.clone(), career.in_at, career.out_at)).collect::<Vec<FetchCareerDto>>(),
     }),
     Err(_) => Err(Error::Unknown),
   }
