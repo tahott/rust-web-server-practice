@@ -6,6 +6,7 @@ use serde::Deserialize;
 use crate::repositories::career::Repository;
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all="camelCase")]
 pub struct Request {
   pub user_id: i32,
   pub company_name: String,
@@ -26,6 +27,7 @@ pub enum Error {
 }
 
 pub async fn execute(repo: Arc<dyn Repository>, req: Request) -> Result<Response, Error>  {
+  println!("{:?}", req);
   match repo.insert(req.user_id, req.company_name, req.job, req.in_at, req.out_at).await {
     Ok(res) => Ok(Response {
       user_id: res.user_id,

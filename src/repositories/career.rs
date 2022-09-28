@@ -3,7 +3,7 @@ use std::sync::Mutex;
 use async_trait::async_trait;
 use chrono::{NaiveDate};
 use entity::career;
-use sea_orm::{DatabaseConnection, Set, ActiveModelTrait, EntityTrait, QueryFilter, ColumnTrait};
+use sea_orm::{DatabaseConnection, Set, ActiveModelTrait, EntityTrait, QueryFilter, ColumnTrait, QueryOrder};
 
 use crate::{domain::career::entity::CareerEntity, infrastructure::database::Database};
 
@@ -139,6 +139,7 @@ impl Repository for PgRepository {
 
     match career::Entity::find()
       .filter(career::Column::UserId.eq(user_id))
+      .order_by_desc(career::Column::InAt)
       .all(conn)
       .await {
         Ok(careers) => Ok(careers.iter().map(|career| CareerEntity::new(career.user_id, career.company_name.clone(), career.job.clone(), career.in_at, career.out_at)).collect::<Vec<CareerEntity>>()),
