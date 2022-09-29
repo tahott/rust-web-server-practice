@@ -3,7 +3,7 @@ use std::sync::Arc;
 use actix_web::{web, HttpResponse};
 use serde::{Serialize, Deserialize};
 
-use crate::{domain::career::{find_by_user_id::{execute, Request, FetchCareerDto}, entity::CareerEntity}, repositories::career::PgRepository};
+use crate::{domain::career::{find_by_user_id::{execute, Request, FetchCareerDto, Error}}, repositories::career::PgRepository};
 
 #[derive(Deserialize)]
 pub struct Info {
@@ -22,6 +22,9 @@ pub async fn fetch_career(req: web::Path<Info>) -> HttpResponse {
     Ok(res) => HttpResponse::Ok().json(Res {
       data: res.careers,
     }),
-    Err(_) => todo!()
+    Err(e) => match e {
+      Error::BadRequest => HttpResponse::BadRequest().finish(),
+      Error::Unknown => HttpResponse::InternalServerError().finish(),
+    } 
   }
 }

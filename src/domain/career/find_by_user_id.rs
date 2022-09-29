@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, convert::TryFrom};
 
 use chrono::NaiveDate;
 use serde::Serialize;
@@ -39,21 +39,22 @@ pub enum Error {
 }
 
 pub async fn execute(repo: Arc<dyn Repository>, req: Request) -> Result<Response, Error> {
-  match repo.find_by_user_id(req.user_id).await {
-    Ok(res) => Ok(Response {
-      careers: res.iter().map(|career| FetchCareerDto::new(career.company_name.clone(), career.job.clone(), career.in_at, career.out_at)).collect::<Vec<FetchCareerDto>>(),
-    }),
-    Err(_) => Err(Error::Unknown),
+  match i32::try_from(req.user_id) {
+    Ok(user_id) => match repo.find_by_user_id(user_id).await {
+      Ok(res) => Ok(Response {
+        careers: res.iter().map(|career| FetchCareerDto::new(career.company_name.clone(), career.job.clone(), career.in_at, career.out_at)).collect::<Vec<FetchCareerDto>>(),
+      }),
+      Err(_) => Err(Error::Unknown),
+    },
+    _ => Err(Error::BadRequest)
   }
 }
 
 #[cfg(test)]
 mod tests {
   use chrono::{NaiveDate};
-
-use crate::repositories::career::InMemoryRepository;
-
-use super::*;
+  use crate::repositories::career::InMemoryRepository;
+  use super::*;
 
   #[tokio::test]
   async fn it_should_be_return_careers() {

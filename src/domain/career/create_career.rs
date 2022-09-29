@@ -22,12 +22,10 @@ pub struct Response {
 }
 
 pub enum Error {
-  BadRequest,
   Unknown,
 }
 
 pub async fn execute(repo: Arc<dyn Repository>, req: Request) -> Result<Response, Error>  {
-  println!("{:?}", req);
   match repo.insert(req.user_id, req.company_name, req.job, req.in_at, req.out_at).await {
     Ok(res) => Ok(Response {
       user_id: res.user_id,
