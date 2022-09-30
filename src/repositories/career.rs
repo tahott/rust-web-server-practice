@@ -22,7 +22,7 @@ pub trait Repository: Send + Sync {
   async fn insert(
     &self,
     user_id: i32,
-    company_name: String,
+    company: String,
     job: String,
     in_at: NaiveDate,
     out_at: Option<NaiveDate>
@@ -54,7 +54,7 @@ impl Repository for InMemoryRepository {
   async fn insert(
     &self,
     user_id: i32,
-    company_name: String,
+    company: String,
     job: String,
     in_at: NaiveDate,
     out_at: Option<NaiveDate>,
@@ -64,7 +64,7 @@ impl Repository for InMemoryRepository {
       _ => return Err(InsertError::Unknown)
     };
 
-    let career = CareerEntity::new(user_id, company_name, job, in_at, out_at);
+    let career = CareerEntity::new(user_id, company, job, in_at, out_at);
 
     lock.push(career.clone());
 
@@ -105,18 +105,18 @@ impl Repository for PgRepository {
   async fn insert(
     &self,
     user_id: i32,
-    company_name: String,
+    company: String,
     job: String,
     in_at: NaiveDate,
     out_at: Option<NaiveDate>,
   ) -> Result<CareerEntity, InsertError> {
     let conn = &self.conn;
 
-    let career = CareerEntity::new(user_id, company_name, job, in_at, out_at);
+    let career = CareerEntity::new(user_id, company, job, in_at, out_at);
 
     let career_model = career::ActiveModel {
       user_id: Set(career.user_id),
-      company_name: Set(career.company_name.clone()),
+      company: Set(career.company.clone()),
       job: Set(career.job.clone()),
       in_at: Set(career.in_at),
       out_at: Set(career.out_at),
@@ -142,7 +142,7 @@ impl Repository for PgRepository {
       .order_by_desc(career::Column::InAt)
       .all(conn)
       .await {
-        Ok(careers) => Ok(careers.iter().map(|career| CareerEntity::new(career.user_id, career.company_name.clone(), career.job.clone(), career.in_at, career.out_at)).collect::<Vec<CareerEntity>>()),
+        Ok(careers) => Ok(careers.iter().map(|career| CareerEntity::new(career.user_id, career.company.clone(), career.job.clone(), career.in_at, career.out_at)).collect::<Vec<CareerEntity>>()),
         Err(_) => Err(FetchError::NotFound),
       }
   }

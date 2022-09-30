@@ -42,7 +42,7 @@ pub async fn execute(repo: Arc<dyn Repository>, req: Request) -> Result<Response
   match i32::try_from(req.user_id) {
     Ok(user_id) => match repo.find_by_user_id(user_id).await {
       Ok(res) => Ok(Response {
-        careers: res.iter().map(|career| FetchCareerDto::new(career.company_name.clone(), career.job.clone(), career.in_at, career.out_at)).collect::<Vec<FetchCareerDto>>(),
+        careers: res.iter().map(|career| FetchCareerDto::new(career.company.clone(), career.job.clone(), career.in_at, career.out_at)).collect::<Vec<FetchCareerDto>>(),
       }),
       Err(_) => Err(Error::Unknown),
     },
