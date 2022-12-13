@@ -170,6 +170,7 @@ impl Repository for PgRepository {
       email: Set(None),
       created_at: Set(user.created_at),
       updated_at: Set(user.updated_at),
+      channel: Set(None),
     };
 
     let res = user_model.insert(conn).await;
