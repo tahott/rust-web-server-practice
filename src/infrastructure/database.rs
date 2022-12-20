@@ -1,9 +1,13 @@
 use std::env;
 use dotenv::dotenv;
+use migration::{Migrator, MigratorTrait};
 use sea_orm::{DatabaseConnection, DbErr};
 
 async fn init_pool(database_url: &str) -> Result<DatabaseConnection, DbErr> {
-  sea_orm::Database::connect(database_url).await
+  let conn = sea_orm::Database::connect(database_url).await?;
+  Migrator::up(&conn, None).await?;
+
+  Ok(conn)
 }
 
 fn database_url() -> String {
