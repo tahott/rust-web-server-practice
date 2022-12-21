@@ -84,7 +84,7 @@ impl Repository for InMemoryRepository {
       _ => return Err(InsertError::Unknown),
     };
 
-    if lock.iter().any(|user| user.id == i32::from(id)) {
+    if lock.iter().any(|user| user.id == i64::from(id)) {
       return Err(InsertError::Conflict);
     }
 
@@ -109,7 +109,7 @@ impl Repository for InMemoryRepository {
       _ => return Err(FetchOneError::Unknown),
     };
 
-    match lock.iter().find(|user| user.id == i32::from(id)) {
+    match lock.iter().find(|user| user.id == i64::from(id)) {
       Some(user) => Ok(user.clone()),
       None => Err(FetchOneError::NotFound),
     }
@@ -122,13 +122,13 @@ impl Repository for InMemoryRepository {
     };
 
     match lock.iter_mut().map(|user| {
-      if user.id == i32::from(id) {
+      if user.id == i64::from(id) {
         user.name = String::from(name.clone());
         user.avatar_url = String::from(avatar_url.clone());
       };
 
       user
-    }).find(|user| user.id == i32::from(id)) {
+    }).find(|user| user.id == i64::from(id)) {
       Some(user) => Ok(user.clone()),
       None => Err(UpdateError::Unknown)
     }
@@ -187,7 +187,7 @@ impl Repository for PgRepository {
   async fn fetch_one(&self, user_id: UserId) -> Result<UserEntity, FetchOneError> {
     let conn = &self.conn;
   
-    match User::find_by_id(i32::from(user_id)).one(conn).await {
+    match User::find_by_id(i64::from(user_id)).one(conn).await {
       Ok(user) => match user {
         Some(user) => Ok(UserEntity {
           id: user.id,
@@ -208,7 +208,7 @@ impl Repository for PgRepository {
     let conn = &self.conn;
 
     let user = user::ActiveModel {
-      id: Set(i32::from(id)),
+      id: Set(i64::from(id)),
       name: Set(String::from(name)),
       avatar_url: Set(String::from(avatar_url)),
       ..Default::default()

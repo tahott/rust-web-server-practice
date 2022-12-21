@@ -6,7 +6,7 @@ use serde::Serialize;
 use crate::repositories::career::Repository;
 
 pub struct Request {
-  pub user_id: i32,
+  pub user_id: i64,
 }
 
 #[derive(Serialize)]
@@ -39,7 +39,7 @@ pub enum Error {
 }
 
 pub async fn execute(repo: Arc<dyn Repository>, req: Request) -> Result<Response, Error> {
-  match i32::try_from(req.user_id) {
+  match i64::try_from(req.user_id) {
     Ok(user_id) => match repo.find_by_user_id(user_id).await {
       Ok(res) => Ok(Response {
         careers: res.iter().map(|career| FetchCareerDto::new(career.company.clone(), career.job.clone(), career.in_at, career.out_at)).collect::<Vec<FetchCareerDto>>(),
@@ -96,7 +96,7 @@ mod tests {
   }
 
   impl Request {
-    fn new(user_id: i32) -> Self {
+    fn new(user_id: i64) -> Self {
       Self {
         user_id,
       }

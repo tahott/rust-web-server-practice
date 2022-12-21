@@ -24,7 +24,7 @@ pub enum TokenError {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UserProfile {
-  pub id: i32,
+  pub id: i64,
   pub login: String,
   pub name: Option<String>,
   pub avatar_url: String,

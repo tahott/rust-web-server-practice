@@ -8,7 +8,7 @@ use crate::repositories::career::Repository;
 #[derive(Debug, Deserialize)]
 #[serde(rename_all="camelCase")]
 pub struct Request {
-  pub user_id: i32,
+  pub user_id: i64,
   pub company: String,
   pub job: String,
   pub in_at: NaiveDate,
@@ -16,7 +16,7 @@ pub struct Request {
 }
 
 pub struct Response {
-  pub user_id: i32,
+  pub user_id: i64,
   pub company: String,
   pub job: String,
 }
@@ -57,7 +57,7 @@ mod tests {
   }
 
   impl Request {
-    fn new(user_id: i32, company: String, job: String, in_at: NaiveDate, out_at: Option<NaiveDate>) -> Self {
+    fn new(user_id: i64, company: String, job: String, in_at: NaiveDate, out_at: Option<NaiveDate>) -> Self {
       Self {
         user_id,
         company,

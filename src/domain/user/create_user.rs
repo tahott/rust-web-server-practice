@@ -5,7 +5,7 @@ use crate::{domain::user::entity::{ UserId, UserName, UserLogin }, repositories:
 use super::entity::UserAvatar;
 
 pub struct Request {
-  pub id: i32,
+  pub id: i64,
   pub login: String,
   pub name: String,
   pub avatar_url: String,
@@ -85,7 +85,7 @@ mod tests {
   }
 
   impl Request {
-    fn new(id: i32, login: UserLogin, name: UserName) -> Self {
+    fn new(id: i64, login: UserLogin, name: UserName) -> Self {
       Self {
         id,
         login: String::from(login),

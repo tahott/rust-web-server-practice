@@ -4,12 +4,12 @@ use crate::domain::user::entity::{UserId};
 use crate::repositories::user::{Repository, FetchOneError};
 
 pub struct Request {
-  pub id: i32,
+  pub id: i64,
 }
 
 #[derive(Debug, PartialEq)]
 pub struct Response {
-  pub id: i32,
+  pub id: i64,
   pub name: String,
   pub email: Option<String>,
 }
@@ -75,7 +75,7 @@ mod tests {
   impl Request {
     fn new(id: UserId) -> Self {
       Self {
-        id: i32::from(id),
+        id: i64::from(id),
       }
     }
   }

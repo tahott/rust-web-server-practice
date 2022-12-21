@@ -21,7 +21,7 @@ pub enum FetchError {
 pub trait Repository: Send + Sync {
   async fn insert(
     &self,
-    user_id: i32,
+    user_id: i64,
     company: String,
     job: String,
     in_at: NaiveDate,
@@ -30,7 +30,7 @@ pub trait Repository: Send + Sync {
 
   async fn find_by_user_id(
     &self,
-    user_id: i32
+    user_id: i64
   ) -> Result<Vec<CareerEntity>, FetchError>;
 }
 
@@ -53,7 +53,7 @@ impl InMemoryRepository {
 impl Repository for InMemoryRepository {
   async fn insert(
     &self,
-    user_id: i32,
+    user_id: i64,
     company: String,
     job: String,
     in_at: NaiveDate,
@@ -73,7 +73,7 @@ impl Repository for InMemoryRepository {
 
   async fn find_by_user_id(
     &self,
-    user_id: i32,
+    user_id: i64,
   ) -> Result<Vec<CareerEntity>, FetchError> {
     let lock = match self.careers.lock() {
       Ok(lock) => lock,
@@ -104,7 +104,7 @@ impl PgRepository {
 impl Repository for PgRepository {
   async fn insert(
     &self,
-    user_id: i32,
+    user_id: i64,
     company: String,
     job: String,
     in_at: NaiveDate,
@@ -134,7 +134,7 @@ impl Repository for PgRepository {
     }
   }
 
-  async fn find_by_user_id(&self, user_id: i32) -> Result<Vec<CareerEntity>, FetchError> {
+  async fn find_by_user_id(&self, user_id: i64) -> Result<Vec<CareerEntity>, FetchError> {
     let conn = &self.conn;
 
     match career::Entity::find()

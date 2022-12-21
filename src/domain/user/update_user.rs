@@ -4,7 +4,7 @@ use crate::repositories::user::Repository;
 use crate::domain::user::entity::{UserId, UserName, UserAvatar};
 
 pub struct Request {
-  pub id: i32,
+  pub id: i64,
   pub name: String,
   pub avatar_url: String,
 }

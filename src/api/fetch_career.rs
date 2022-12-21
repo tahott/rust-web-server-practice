@@ -7,7 +7,7 @@ use crate::{domain::career::{find_by_user_id::{execute, Request, FetchCareerDto,
 
 #[derive(Deserialize)]
 pub struct Info {
-  pub user_id: i32
+  pub user_id: i64
 }
 
 #[derive(Serialize)]

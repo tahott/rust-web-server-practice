@@ -108,15 +108,15 @@ fn parse_domain(part: &str) -> Result<(), Error> {
   }
 }
 
-const USER_ID_MAX_LENGTH: i32 = 2_147_483_647;
+const USER_ID_MAX_LENGTH: i64 = 2_147_483_647;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
-pub struct UserId(i32);
+pub struct UserId(i64);
 
-impl TryFrom<i32> for UserId {
+impl TryFrom<i64> for UserId {
   type Error = ();
 
-  fn try_from(n: i32) -> Result<Self, Self::Error> {
+  fn try_from(n: i64) -> Result<Self, Self::Error> {
     if n > USER_ID_MAX_LENGTH || n < 0 {
       Err(())
     } else {
@@ -125,7 +125,7 @@ impl TryFrom<i32> for UserId {
   }
 }
 
-impl From<UserId> for i32 {
+impl From<UserId> for i64 {
   fn from(n: UserId) -> Self {
     n.0
   }
@@ -134,11 +134,11 @@ impl From<UserId> for i32 {
 #[cfg(test)]
 impl UserId {
   pub fn one() -> Self {
-    Self(i32::from(443))
+    Self(i64::from(443))
   }
 
   pub fn two() -> Self {
-    Self(i32::from(3000))
+    Self(i64::from(3000))
   }
 }
 
@@ -236,7 +236,7 @@ impl UserAvatar {
 
 #[derive(Clone, Debug, Deserialize, FromQueryResult)]
 pub struct UserEntity {
-  pub id: i32,
+  pub id: i64,
   pub login: String,
   pub name: String,
   pub avatar_url: String,
@@ -249,7 +249,7 @@ impl UserEntity {
   pub fn new(id: UserId, login: UserLogin, name: UserName, avatar_url: UserAvatar) -> Self {
     let now = Utc::now().with_timezone(&FixedOffset::east(9 * 3600));
     Self {
-      id: i32::from(id),
+      id: i64::from(id),
       login: String::from(login),
       name: String::from(name),
       avatar_url: String::from(avatar_url),
