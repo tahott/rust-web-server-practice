@@ -5,7 +5,7 @@ use actix_web::{HttpServer, App, middleware::{Logger}, web, HttpRequest};
 use sea_orm::DatabaseConnection;
 use serde::Deserialize;
 
-use crate::{api::{fetch_access_token::fetch_access_token, authorization_code::{authorization_code}, create_career::create_career, fetch_career::fetch_career, fetch_user::fetch_user}};
+use crate::{api::{fetch_access_token::fetch_access_token, authorization_code::{authorization_code}, create_career::create_career, fetch_career::fetch_career, update_user::update_user}};
 
 pub struct Server {
   port: u16,
@@ -40,7 +40,7 @@ impl Server {
         .route("/authorization/code", web::get().to(authorization_code))
         .route("/career", web::post().to(create_career))
         .route("/career/{user_id}", web::get().to(fetch_career))
-        .route("/user", web::patch().to(fetch_user))
+        .route("/user", web::patch().to(update_user))
     });
 
     server.bind(format!("{}:{}", "127.0.0.1", self.port))?.run().await
