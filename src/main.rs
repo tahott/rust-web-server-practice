@@ -2,6 +2,7 @@ mod api;
 mod infrastructure;
 mod domain;
 mod repositories;
+mod middleware;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

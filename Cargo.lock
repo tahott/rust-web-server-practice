@@ -1916,6 +1916,7 @@ dependencies = [
  "chrono",
  "dotenv",
  "entity",
+ "futures-util",
  "jsonwebtoken",
  "log",
  "migration",
