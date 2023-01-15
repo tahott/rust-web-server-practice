@@ -5,7 +5,7 @@ use actix_web::{HttpServer, App, middleware::{Logger}, web, HttpRequest};
 use sea_orm::DatabaseConnection;
 use serde::Deserialize;
 
-use crate::{api::{fetch_access_token::fetch_access_token, authorization_code::{authorization_code}, create_career::create_career, fetch_career::fetch_career, update_user::update_user}};
+use crate::{api::{fetch_access_token::fetch_access_token, authorization_code::{authorization_code}, create_career::create_career, fetch_career::fetch_career, update_user::update_user}, middleware::auth_middleware::Authentication};
 
 pub struct Server {
   port: u16,
@@ -34,6 +34,7 @@ impl Server {
           Cors::default().allow_any_origin().allow_any_method().allow_any_header()
         )
         .wrap(Logger::default())
+        .wrap(Authentication)
         .app_data(pool.clone())
         .route("/", web::get().to(index))
         .route("/signin", web::post().to(fetch_access_token))
