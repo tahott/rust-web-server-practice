@@ -7,7 +7,12 @@ use actix_web::{
   Error, HttpResponse
 };
 use futures_util::future::LocalBoxFuture;
+use jsonwebtoken::{Validation, DecodingKey};
 use serde::Serialize;
+
+use crate::domain::auth::entity::Claims;
+
+const IGNORE_ROUTES: [&str; 2] = ["/authorization/code", "/signin"];
 
 #[derive(Serialize)]
 pub struct AuthRes {
@@ -52,6 +57,21 @@ where
 
     if Method::OPTIONS == *req.method() {
       authenticate_pass = true;
+    } else {
+      for ignore_route in IGNORE_ROUTES.iter() {
+        if req.path().starts_with(ignore_route) {
+          authenticate_pass = true;
+          break;
+        }
+      }
+
+      if !authenticate_pass {
+        if let Some(token) = req.headers().get("Authorization") {
+          let jwt = jsonwebtoken::decode::<Claims>(token.to_str().unwrap(), &DecodingKey::from_secret("secret".as_ref()), &Validation::default()).unwrap();
+          println!("{:?}", jwt);
+          authenticate_pass = true;
+        }
+      }
     }
     println!("Hi from start. You requested: {}", req.path());
 
