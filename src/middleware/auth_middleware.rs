@@ -3,9 +3,10 @@ use std::future::{ready, Ready};
 use actix_web::{
   body::EitherBody,
   dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
-  http::{Method},
+  http::{Method, header},
   Error, HttpResponse
 };
+use chrono::Local;
 use futures_util::future::LocalBoxFuture;
 use jsonwebtoken::{Validation, DecodingKey};
 use serde::Serialize;
@@ -67,9 +68,19 @@ where
 
       if !authenticate_pass {
         if let Some(token) = req.headers().get("Authorization") {
-          let jwt = jsonwebtoken::decode::<Claims>(token.to_str().unwrap(), &DecodingKey::from_secret("secret".as_ref()), &Validation::default()).unwrap();
-          println!("{:?}", jwt);
-          authenticate_pass = true;
+          match jsonwebtoken::decode::<Claims>(&token.to_str().unwrap(), &DecodingKey::from_secret("secret".as_ref()), &Validation::default()) {
+            Ok(jwt) => {
+              let exp = i64::try_from(jwt.claims.exp).expect("0");
+              if !Local::now().timestamp_millis().lt(&exp) {
+                authenticate_pass = false;
+              } else {
+                authenticate_pass = true;
+              }
+            },
+            Err(e) => {
+              println!("{:?}", e);
+            },
+          };
         }
       }
     }
@@ -85,7 +96,7 @@ where
       let response = HttpResponse::Unauthorized()
         .finish()
         .map_into_right_body();
-      Box::pin(async { Ok(ServiceResponse::new(request, response)) })
+      return Box::pin(async { Ok(ServiceResponse::new(request, response)) });
     }
   }
 }
