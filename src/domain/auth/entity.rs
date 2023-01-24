@@ -30,12 +30,21 @@ pub struct UserProfile {
   pub avatar_url: String,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all="camelCase")]
+pub struct ResUserProfile {
+  pub id: i64,
+  pub login: String,
+  pub name: Option<String>,
+  pub avatar_url: String,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
   pub exp: u128,
   pub aud: Option<String>,
   pub iss: Option<String>,
-  pub user: UserProfile,
+  pub user: ResUserProfile,
 }
 
 impl TryFrom<String> for OAuthProvider {
@@ -136,7 +145,12 @@ impl Authentication {
           exp: exp.as_millis() + (60 * 1000) * 60, // 1hour
           aud: Some("".to_string()),
           iss: Some("DECAFO".to_string()),
-          user,
+          user: ResUserProfile {
+            id: user.id,
+            name: user.name,
+            login: user.login,
+            avatar_url: user.avatar_url,
+          },
         };
 
         let jwt = encode(&Header::default(), &my_claims, &EncodingKey::from_secret("secret".as_ref())).expect("msg");

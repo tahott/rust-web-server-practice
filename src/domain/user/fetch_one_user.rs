@@ -1,16 +1,21 @@
 use std::sync::Arc;
 
+use serde::{Deserialize, Serialize};
+
 use crate::domain::user::entity::{UserId};
 use crate::repositories::user::{Repository, FetchOneError};
 
+#[derive(Deserialize)]
 pub struct Request {
   pub id: i64,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize)]
+#[serde(rename_all="camelCase")]
 pub struct Response {
   pub id: i64,
   pub name: String,
+  pub avatar_url: String,
   pub email: Option<String>,
 }
 
@@ -27,6 +32,7 @@ pub async fn execute(repo: Arc<dyn Repository>, req: Request) -> Result<Response
       Ok(user) => Ok(Response {
         id: user.id,
         name: user.name,
+        avatar_url: user.avatar_url,
         email: user.email,
       }),
       Err(FetchOneError::NotFound) => Err(Error::NotFound),

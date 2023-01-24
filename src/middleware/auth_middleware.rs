@@ -3,7 +3,7 @@ use std::future::{ready, Ready};
 use actix_web::{
   body::EitherBody,
   dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
-  http::{Method, header},
+  http::{Method},
   Error, HttpResponse
 };
 use chrono::Local;
@@ -68,7 +68,7 @@ where
 
       if !authenticate_pass {
         if let Some(token) = req.headers().get("Authorization") {
-          match jsonwebtoken::decode::<Claims>(&token.to_str().unwrap(), &DecodingKey::from_secret("secret".as_ref()), &Validation::default()) {
+          match jsonwebtoken::decode::<Claims>(token.to_str().unwrap(), &DecodingKey::from_secret("secret".as_ref()), &Validation::default()) {
             Ok(jwt) => {
               let exp = i64::try_from(jwt.claims.exp).expect("0");
               if !Local::now().timestamp_millis().lt(&exp) {
@@ -84,7 +84,6 @@ where
         }
       }
     }
-    println!("Hi from start. You requested: {}", req.path());
 
     if authenticate_pass {
       let fut = self.service.call(req);

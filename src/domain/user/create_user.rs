@@ -1,9 +1,13 @@
 use std::sync::Arc;
 
+use serde::{Serialize, Deserialize};
+
 use crate::{domain::user::entity::{ UserId, UserName, UserLogin }, repositories::user::{Repository, InsertError}};
 
 use super::entity::UserAvatar;
 
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all="camelCase")]
 pub struct Request {
   pub id: i64,
   pub login: String,
