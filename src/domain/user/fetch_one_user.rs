@@ -14,6 +14,7 @@ pub struct Request {
 #[serde(rename_all="camelCase")]
 pub struct Response {
   pub id: i64,
+  pub login: String,
   pub name: String,
   pub avatar_url: String,
   pub email: Option<String>,
@@ -31,6 +32,7 @@ pub async fn execute(repo: Arc<dyn Repository>, req: Request) -> Result<Response
     Ok(id) => match repo.fetch_one(id).await {
       Ok(user) => Ok(Response {
         id: user.id,
+        login: user.login,
         name: user.name,
         avatar_url: user.avatar_url,
         email: user.email,

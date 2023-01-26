@@ -15,9 +15,13 @@ pub struct Request {
   pub avatar_url: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Serialize)]
+#[serde(rename_all="camelCase")]
 pub struct Response {
+  pub id: i64,
+  pub login: String,
   pub name: String,
+  pub avatar_url: String,
   pub email: Option<String>,
 }
 
@@ -37,7 +41,10 @@ pub async fn execute(repo: Arc<dyn Repository>, req: Request) -> Result<Response
   ) {
     (Ok(id), Ok(login), Ok(name), Ok(avatar_url)) => match repo.insert(id, login, name, avatar_url).await {
       Ok(user) => Ok(Response {
+        id: user.id,
+        login: user.login,
         name: user.name,
+        avatar_url: user.avatar_url,
         email: user.email,
       }),
       Err(InsertError::Conflict) => Err(Error::Conflict),

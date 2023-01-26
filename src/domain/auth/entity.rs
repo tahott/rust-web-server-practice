@@ -7,7 +7,7 @@ use oauth2::RequestTokenError::{ServerResponse, Request, Parse, Other};
 use serde::{Serialize, Deserialize};
 use reqwest::{header::{HeaderMap, HeaderValue, CONTENT_TYPE, USER_AGENT}, Error};
 
-use crate::{domain::user::{create_user::{self, Request as UserRequest}, fetch_one_user, update_user::{self, Request as UpdateUserRequest}}, repositories::user::PgRepository};
+use crate::{domain::user::{create_user::{self, Request as UserRequest}, fetch_one_user::{self, Response}, update_user::{self, Request as UpdateUserRequest}}, repositories::user::PgRepository};
 
 
 #[derive(Debug, Clone)]
@@ -72,6 +72,12 @@ pub struct Authentication {
   pub auth_code: AuthorizationCode,
 }
 
+async fn create_user(repo: Arc<PgRepository>, req: UserRequest) -> create_user::Response {
+  create_user::execute(repo, req).await.unwrap_or_else(|err| {
+    panic!("create user failed:: {:?}", err)
+  })
+}
+
 impl Authentication {
   pub fn new(_provider: OAuthProvider, auth_code: AuthorizationCode) -> Self {
     dotenv().ok();
@@ -118,44 +124,49 @@ impl Authentication {
           id: user.id,
         };
 
-        match fetch_one_user::execute(repo.clone(), fetch_request).await {
-          Ok(res) => {
-            if res.id == user.id {
-              let req = UpdateUserRequest {
-                id: req.id,
-                name: req.name,
-                avatar_url: req.avatar_url,
-              };
-              update_user::execute(repo, req).await;
-            }
-          },
-          Err(_) => {
-            match create_user::execute(repo, req).await {
-              Ok(res) => {
-                println!("create user:: {:?}", res);
-              },
-              Err(err) => {
-                println!("{:?}", err);
+        let fetch_one_user = fetch_one_user::execute(repo.clone(), fetch_request).await;
+
+        if fetch_one_user.is_err() {
+          let create_user = create_user::execute(repo, req).await;
+          if create_user.is_err() {
+            panic!("{:?}", create_user.err())
+          } else {
+            let u = create_user.unwrap();
+
+            let my_claims = Claims {
+              exp: exp.as_millis() + (60 * 1000) * 2, // 1hour
+              aud: Some("".to_string()),
+              iss: Some("DECAFO".to_string()),
+              user: ResUserProfile {
+                id: u.id,
+                name: Some(u.name),
+                login: u.login,
+                avatar_url: u.avatar_url,
               },
             };
-          },
+    
+            let jwt = encode(&Header::default(), &my_claims, &EncodingKey::from_secret("secret".as_ref())).expect("msg");
+    
+            Ok(jwt)
+          }
+        } else {
+          let u = fetch_one_user.unwrap();
+          let my_claims = Claims {
+            exp: exp.as_millis() + (60 * 1000) * 2, // 1hour
+            aud: Some("".to_string()),
+            iss: Some("DECAFO".to_string()),
+            user: ResUserProfile {
+              id: u.id,
+              name: Some(u.name),
+              login: u.login,
+              avatar_url: u.avatar_url,
+            },
+          };
+  
+          let jwt = encode(&Header::default(), &my_claims, &EncodingKey::from_secret("secret".as_ref())).expect("msg");
+  
+          Ok(jwt)
         }
-
-        let my_claims = Claims {
-          exp: exp.as_millis() + (60 * 1000) * 60, // 1hour
-          aud: Some("".to_string()),
-          iss: Some("DECAFO".to_string()),
-          user: ResUserProfile {
-            id: user.id,
-            name: user.name,
-            login: user.login,
-            avatar_url: user.avatar_url,
-          },
-        };
-
-        let jwt = encode(&Header::default(), &my_claims, &EncodingKey::from_secret("secret".as_ref())).expect("msg");
-
-        Ok(jwt)
       },
       Err(e) => {
         println!("{:?}", e);
